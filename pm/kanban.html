@@ -1,0 +1,1817 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>프로젝트 진행 현황</title>
+<!-- 폰트는 없어도 화면이 뜨도록 렌더를 막지 않게 붙인다 (로컬 파일이라 인터넷이 없을 수 있다) -->
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{
+  /* 강조색: 관리 대상 서비스 화면과 섞이지 않게 다른 계열로 골랐다. 흰 바탕 대비 6.47:1 */
+  --accent:#5b4bc4;
+  --accent-soft:#ede9fb;
+  --accent-line:#d9d2f5;
+
+  --bg:#f7f6fb;
+  --card:#ffffff;
+  /* 섹션 하나를 감싸는 판. 바탕(#f7f6fb)과 카드(#fff) 사이 회색이라
+     흰 칸반 상자가 판 위에 얹힌 것으로 보인다. 카드 안의 카드가 아니다. */
+  --tray:#ecebf4;
+  --tray-line:#dedbeb;
+  --line:#e3e0ee;
+  --line-soft:#efedf6;
+  --ink:#1e1b2e;
+  --ink-2:#4a4560;
+  --ink-3:#7d7796;
+
+  /* 단계 상태 여섯. 색만으로 구분하지 않고 글자를 늘 함께 둔다.
+     fixed(수정 완료)는 QA 칸에만 나온다 — 고치기는 끝났고 검증이 남은 자리다 */
+  --st-idle:#7d7796;   --st-idle-bg:#f1f0f5;
+  --st-doing:#8a5a00;  --st-doing-bg:#fdf4e3;
+  --st-fixed:#1f5fa8;  --st-fixed-bg:#eaf2fb;
+  --st-done:#0a7a45;   --st-done-bg:#e8f6ee;
+  --st-block:#c02626;  --st-block-bg:#fdecec;
+  --st-na:#a5a1b3;     --st-na-bg:#f7f7fa;
+
+  /* 영역 배지. 강조가 아니라 분류 표시라 채도를 낮춘다 */
+  --ar-pl:#6d28d9; --ar-pl-bg:#f3eeff;
+  --ar-fe:#0369a1; --ar-fe-bg:#e6f4fc;
+  --ar-be:#92400e; --ar-be-bg:#fdf1de;
+  --ar-qa:#be185d; --ar-qa-bg:#fdeaf3;
+  --ar-rl:#0f766e; --ar-rl-bg:#e3f6f3;
+
+  --r:12px;
+  --r-sm:9px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Pretendard,-apple-system,'Segoe UI',system-ui,sans-serif;
+  font-size:13px; line-height:1.6; color:var(--ink); background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit}
+.topbar{height:3px;background:var(--accent)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px 90px}
+
+/* ─── 머리 ─── */
+header{padding:26px 0 18px}
+.htop{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.hsub{margin:3px 0 0;color:var(--ink-3);font-size:12px}
+.hright{display:flex;align-items:center;gap:10px}
+.saved{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.saved.on{color:var(--st-done);font-weight:600}
+.saved.err{color:var(--st-block);font-weight:700}
+
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink-2);
+  border-radius:var(--r-sm);padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;
+  user-select:none;-webkit-user-select:none}
+.btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#4a3cab;color:#fff}
+.btn.mini{padding:4px 9px;font-size:11px}
+
+.bar{margin:16px 0 0;display:flex;align-items:center;gap:14px}
+.track{flex:1;height:8px;background:#e8e5f2;border-radius:99px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+.bar .num{font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar .num b{color:var(--ink);font-size:14px}
+
+/* 단계별 전체 요약 */
+.sum{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sum-c{flex:1;min-width:110px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:11px 13px}
+.sum-c .l{font-size:11px;color:var(--ink-3)}
+.sum-c .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.sum-c .v small{font-size:12px;font-weight:400;color:var(--ink-3)}
+
+/* ─── 섹션 카드 ─── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px 18px;margin:14px 0}
+.card.blocked{border-color:#f0c9c9}
+
+.sec-head{display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none}
+.sec-no{width:26px;height:26px;flex:none;border-radius:7px;background:var(--accent-soft);
+  color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sec-title{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.sec-due{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.sec-due.soon{color:var(--st-doing);font-weight:700}
+.sec-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.sec-count{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.caret{color:var(--ink-3);font-size:11px;width:12px;text-align:center;flex:none}
+
+.sec-body{margin-top:13px;border-top:1px solid var(--line-soft);padding-top:12px}
+.sec-body.hide{display:none}
+
+.quote{margin:0 0 10px;padding:9px 13px;background:#faf9fd;border-left:2px solid var(--accent-line);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink-2);font-size:12px;white-space:pre-line}
+.warn{margin:0 0 12px;padding:11px 13px;background:var(--st-doing-bg);border-radius:var(--r-sm);
+  color:#6b4e00;font-size:12px;white-space:pre-line}
+.warn:not(.empty):before{content:'\26A0  '}
+.quote:not(.empty):before{content:'슬랙 원문: '}
+.docs:not(.empty):before{content:'근거 문서: '}
+.note{margin:0 0 10px;font-size:12px;color:var(--ink-3);white-space:pre-line}
+.docs{margin:12px 0 0;font-size:11.5px;color:var(--ink-3)}
+
+/* ─── 화면 줄 ─── */
+.scr + .scr{border-top:1px solid var(--line-soft)}
+.scr-head{display:flex;align-items:center;gap:10px;padding:10px 6px;cursor:pointer;border-radius:var(--r-sm)}
+.scr-head:hover{background:#faf9fd}
+.scr-name{font-weight:700;font-size:13px;flex:none}
+.scr-route{font-size:11px;color:var(--ink-3);font-family:ui-monospace,Consolas,monospace;flex:none}
+.pipe{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.scr-cnt{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;width:34px;text-align:right;flex:none}
+
+/* 단계 칩 */
+.stg{border:1px solid transparent;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;line-height:1.35}
+.stg[data-s="idle"] {background:var(--st-idle-bg); color:var(--st-idle)}
+.stg[data-s="doing"]{background:var(--st-doing-bg);color:var(--st-doing);border-color:#f0dcae}
+.stg[data-s="done"] {background:var(--st-done-bg); color:var(--st-done)}
+.stg[data-s="block"]{background:var(--st-block-bg);color:var(--st-block);border-color:#f2c4c4}
+.stg[data-s="na"]   {background:var(--st-na-bg);   color:var(--st-na)}
+.stg:hover{border-color:var(--accent)}
+
+/* ─── 펼친 내용 ─── */
+.scr-body{padding:4px 6px 14px 6px}
+.stage-blk{margin-top:12px;padding-left:12px;border-left:2px solid var(--line-soft)}
+.stage-blk:first-child{margin-top:4px}
+.stage-t{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.stage-t .n{font-size:12px;font-weight:700;color:var(--ink-2)}
+.stage-t .own{font-size:11px;color:var(--ink-3)}
+.stage-empty{font-size:11.5px;color:var(--ink-3);padding:2px 0 4px}
+
+.task{display:flex;gap:9px;padding:6px 0;align-items:flex-start}
+.box{width:17px;height:17px;flex:none;margin-top:1px;border-radius:5px;border:1.5px solid var(--line);
+  background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;line-height:1;padding:0;color:transparent}
+.box:hover{border-color:var(--accent)}
+.box[data-s="doing"]{border-color:var(--st-doing);background:var(--st-doing-bg);color:var(--st-doing)}
+.box[data-s="done"] {border-color:var(--st-done); background:var(--st-done); color:#fff}
+.box[data-s="block"]{border-color:var(--st-block);background:var(--st-block-bg);color:var(--st-block)}
+
+.tbody{flex:1;min-width:0}
+.tline{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.code{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:ui-monospace,Consolas,monospace}
+.code.PL{background:var(--ar-pl-bg);color:var(--ar-pl)}
+.code.FE{background:var(--ar-fe-bg);color:var(--ar-fe)}
+.code.BE{background:var(--ar-be-bg);color:var(--ar-be)}
+.code.QA{background:var(--ar-qa-bg);color:var(--ar-qa)}
+.code.RL{background:var(--ar-rl-bg);color:var(--ar-rl)}
+.ttitle{font-weight:600;font-size:12.5px}
+.task[data-s="done"] .ttitle{color:var(--ink-3);font-weight:400}
+.tdate{font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.tdesc{font-size:12px;color:var(--ink-2);line-height:1.7;margin-top:3px;white-space:pre-line}
+.tref{font-size:11px;color:var(--ink-3);font-family:ui-monospace,Consolas,monospace;margin-top:3px;word-break:break-all}
+.tref a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.tref a:hover{background:var(--accent-soft)}
+
+.tinc{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px;font-size:11px}
+.tinc .clab{color:var(--ink-3);margin-right:2px}
+
+.tcommit{font-size:11px;color:var(--ink-3);margin-top:3px}
+.tcommit .clab{color:var(--ink-3)}
+.tcommit a{color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.tcommit a:hover{background:var(--accent-soft)}
+
+/* ─── 표 ─── */
+.tw{overflow-x:auto;margin-top:6px}
+table{border-collapse:collapse;width:100%;font-size:12px;min-width:760px}
+th{text-align:left;font-weight:700;color:var(--ink-2);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.res td{color:var(--ink-3)}
+tr.res .b-what{text-decoration:line-through}
+
+/* ─── 인라인 편집 ─── */
+.ed{border-radius:4px;padding:0 2px;margin:0 -2px;cursor:text}
+.ed:hover{background:#f3f0fb;box-shadow:inset 0 -1px 0 var(--accent-line)}
+/* 버튼 안에 든 문구는 버튼의 일부다. 글자 위에서도 손 모양 커서가 뜨고,
+   글자만 다른 색으로 뜨지 않는다. 문구 고치기(더블클릭)는 그대로 살아 있다.
+   2026-08-28 제보 — 글자를 누르면 버튼이 안 눌리고 글자가 선택됐다. */
+.btn .ed{cursor:pointer}
+.btn .ed:hover{background:transparent;box-shadow:none}
+/* 다만 고치는 중일 때는 글자를 골라야 하므로 선택을 다시 켠다. */
+.ed.live{user-select:text;-webkit-user-select:text}
+.ed.live{
+  background:#fff8ef;box-shadow:0 0 0 1.5px #d98324;outline:none;
+  white-space:pre-wrap;cursor:text;
+}
+/* 비어 있는 칸은 아예 없는 것처럼 사라진다. 지웠으면 자국도 남지 않아야 한다.
+   다시 채울 때는 위의 [빈 칸 보기] 를 눌러 자리를 드러낸다. */
+.ed.empty{display:none}
+body.editing .ed.empty{
+  display:inline-block;min-width:70px;min-height:15px;font-weight:400;
+  opacity:.55;outline:1px dashed var(--accent-line);border-radius:4px;
+}
+body.editing .ed.empty:before{content:attr(data-ph);color:var(--ink-3);font-size:11px}
+body.editing .quote.empty,body.editing .warn.empty,
+body.editing .docs.empty,body.editing .note.empty{
+  display:block;background:transparent;border-left:0;padding:1px 4px;margin:0 0 4px;
+}
+
+.task .del{
+  flex:none;width:20px;height:20px;border:0;background:transparent;color:var(--ink-3);
+  border-radius:5px;font-size:13px;line-height:1;cursor:pointer;opacity:0;padding:0;
+}
+.task:hover .del{opacity:1}
+.task .del:hover{background:var(--st-block-bg);color:var(--st-block)}
+
+.addbtn{
+  margin-top:4px;border:1px dashed var(--line);background:transparent;color:var(--ink-3);
+  border-radius:var(--r-sm);padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;
+}
+.addbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+.gate{max-width:540px;margin:90px auto;text-align:center}
+.gate h2{font-size:19px;margin:0 0 8px}
+.gate p{color:var(--ink-2);margin:0 0 22px;font-size:13px;line-height:1.8;white-space:pre-line}
+.gate .hint{margin-top:18px;font-size:12px;color:var(--ink-3);line-height:1.9}
+
+h2.sec{font-size:15px;font-weight:700;margin:30px 0 0;letter-spacing:-.01em}
+.sec-sub{font-size:12px;color:var(--ink-3);margin:2px 0 0}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);line-height:1.9}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.legend span b{color:var(--ink-2)}
+
+/* ─── 액션 플랜 겹침창 ─── */
+.pov{
+  position:fixed;inset:0;background:rgba(30,27,46,.55);z-index:50;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:34px 20px;overflow:auto;
+}
+.pov-bar{display:flex;gap:8px;align-items:center}
+.pov-chk{
+  display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:7px 12px;font-size:12px;font-weight:600;color:var(--ink-2);
+  cursor:pointer;user-select:none;-webkit-user-select:none;
+}
+.pov-chk:hover{border-color:var(--accent-line);color:var(--accent)}
+.pov-chk input{margin:0;cursor:pointer;accent-color:var(--accent)}
+.pov-bar .btn{background:#fff}
+.pov-note{color:#fff;font-size:12px;opacity:.85}
+
+/* ================= 칸반 =================
+   일감 하나가 카드다. 카드는 PL → 개발 → QA → 릴리즈 대기 → 배포 완료 순으로
+   왼쪽에서 오른쪽으로 옮겨 간다. 어느 칸에 서는지는 자동으로 정해진다.
+   ⚠️ 칸이 비어 있으면 거기서 멈춘다. QA 를 안 만들었으면 QA 칸에서 더 못 간다. */
+.kb{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:18px;align-items:start}
+.kb-col{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:11px 11px 13px}
+.kb-h{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.kb-h b{font-size:13px;font-weight:700}
+.kb-n{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);
+  border-radius:8px;padding:1px 7px}
+.kb-col.stuck .kb-n{color:var(--st-block);background:var(--st-block-bg)}
+.kb-e{font-size:12px;color:var(--ink-3);padding:8px 2px}
+
+.jc{border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 9px;margin-bottom:7px;
+  cursor:pointer;background:#fff}
+.jc:hover{border-color:var(--accent-line);background:var(--accent-soft)}
+.jc.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.jc-t{font-size:12.5px;font-weight:600;line-height:1.45;color:var(--ink);
+  display:flex;align-items:flex-start;gap:6px}
+.jc-tx{flex:1;min-width:0}
+/* 배포 표시. 태그가 있으면 진하게, 날짜뿐이면 흐리게 둔다 */
+.ship{flex:none;font-size:9.5px;font-weight:700;line-height:1.7;padding:0 5px;border-radius:5px;
+  background:var(--st-na-bg);color:var(--ink-3);border:1px solid var(--line);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.ship.tag{background:var(--ar-rl-bg);color:var(--ar-rl);border-color:transparent}
+.dt-sh .ship{margin-left:4px}
+.jc-m{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}
+.jc-s{font-size:10.5px;color:var(--ink-3)}
+
+/* 단계 배지. 있는 단계만 진하고, 없는 단계는 흐린 테두리로 자리만 남긴다.
+   빠뜨린 것이 그 자리에서 보여야 한다. */
+.st{font-size:9.5px;font-weight:700;border-radius:5px;padding:1px 5px;line-height:1.6}
+.st.PL{background:var(--ar-pl-bg);color:var(--ar-pl)}
+.st.FE{background:var(--ar-fe-bg);color:var(--ar-fe)}
+.st.BE{background:var(--ar-be-bg);color:var(--ar-be)}
+.st.FS{background:linear-gradient(90deg,var(--ar-fe-bg) 50%,var(--ar-be-bg) 50%);color:var(--ar-be)}
+.st.QA{background:var(--ar-qa-bg);color:var(--ar-qa)}
+.st.RL{background:var(--ar-rl-bg);color:var(--ar-rl)}
+.st.off{background:transparent;color:var(--st-na);border:1px dashed var(--line)}
+.st.miss{background:var(--st-block-bg);color:var(--st-block);border:1px solid var(--st-block)}
+.st .mk{opacity:.75;margin-left:3px}
+
+/* ── 상세 ── */
+.dt{position:fixed;top:0;right:0;bottom:0;width:520px;max-width:92vw;background:var(--card);
+  border-left:1px solid var(--line);box-shadow:-8px 0 28px rgba(30,27,46,.10);z-index:40;
+  overflow:auto;padding:20px 22px 40px}
+.dt-x{position:absolute;top:14px;right:16px;border:0;background:transparent;color:var(--ink-3);
+  font-size:18px;line-height:1;cursor:pointer;padding:4px 7px;border-radius:6px}
+.dt-x:hover{background:var(--st-block-bg);color:var(--st-block)}
+.dt h3{font-size:17px;margin:0 4px 3px 0;letter-spacing:-.01em}
+.dt .sub{font-size:12px;color:var(--ink-3);margin:0 0 16px}
+.dt-s{border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 12px;margin-bottom:9px}
+.dt-s.none{border-style:dashed;background:var(--st-na-bg)}
+.dt-sh{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.dt-sh .who{font-size:12px;font-weight:700}
+.dt-sh .when{margin-left:auto;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.dt-tt{font-size:13px;font-weight:600;line-height:1.5}
+.dt-sh .sp{flex:1}
+.dt-sh .rn{font-size:11px;font-weight:700;color:var(--ink-3)}
+.dt-rs{margin-top:10px;padding-left:11px;border-left:2px solid var(--line)}
+.dt-r{border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 10px;margin-bottom:7px}
+.dt-rx{border:0;background:none;cursor:pointer;font-size:14px;line-height:1;
+       color:var(--ink-3);padding:0 2px}
+.dt-rx:hover{color:var(--st-block)}
+.dt-radd{font-family:inherit;font-size:11.5px;font-weight:700;color:var(--accent);
+         border:1px dashed var(--line);background:none;border-radius:var(--r-sm);
+         padding:5px 10px;cursor:pointer}
+.dt-radd:hover{background:var(--accent-soft)}
+.dt-radd:disabled{color:var(--ink-3);cursor:not-allowed;background:none}
+.dt-ro{font-size:11.5px;font-weight:700;color:var(--ink-3)}
+.dt-d{font-size:12px;color:var(--ink-2);line-height:1.75;margin-top:4px;white-space:pre-wrap}
+.dt-add{border:1px dashed var(--line);background:transparent;color:var(--ink-3);border-radius:var(--r-sm);
+  padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;user-select:none}
+.dt-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+/* 섹션 · 화면 머리
+   섹션 하나가 회색 판 하나다. 판 안에 화면 이름과 칸반이 들어간다.
+   판이 없으면 칸반 상자들이 바탕 위에 흩어져 어디까지가 한 메뉴인지 안 보인다. */
+.kb-sec{margin-top:20px;background:var(--tray);border:1px solid var(--tray-line);
+  border-radius:14px;padding:12px 14px 16px}
+.kb-sec.shut{padding-bottom:12px}
+.kb-sech{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+  -webkit-user-select:none;padding:2px 2px}
+.kb-sech:hover .kb-sect{color:var(--accent)}
+/* 접힘·펼침 표시. 접히면 오른쪽, 펼치면 아래를 가리킨다 */
+.kb-cv{flex:none;width:13px;text-align:center;font-size:12px;color:var(--ink-2);line-height:1;
+  transition:transform .12s ease;transform:rotate(90deg)}
+.kb-sec.shut .kb-cv{transform:rotate(0deg)}
+.kb-sech:hover .kb-cv{color:var(--accent)}
+.kb-secno{width:26px;height:26px;flex:none;border-radius:7px;background:#fff;
+  color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.kb-sect{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.kb-secn{font-size:11.5px;color:var(--ink-3)}
+.kb-secd{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.kb-scr{font-size:12.5px;font-weight:600;color:var(--ink-2);margin:14px 2px 0}
+.kb-sec .kb{margin-top:8px}
+
+/* 상세 안의 네 묶음 */
+.dt-g{border-top:1px solid var(--line-soft);padding-top:12px;margin-top:12px}
+.dt-g:first-of-type{border-top:0;padding-top:0}
+.dt-g.lock{opacity:.55}
+.dt-gh{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}
+.dt-gh b{font-size:13px}
+.dt-gh .lockmsg{font-size:11px;color:var(--ink-3)}
+.dt-sel{font-family:inherit;font-size:11.5px;font-weight:600;color:var(--ink-2);
+  border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:#fff;cursor:pointer}
+.dt-sel:disabled{cursor:not-allowed;color:var(--ink-3);background:var(--st-na-bg)}
+/* 고른 상태를 색으로도 보인다. 글자가 이미 있으니 색은 거드는 몫이다 */
+.dt-sel[data-s="doing"]{color:var(--st-doing);background:var(--st-doing-bg);border-color:#f0dcae}
+.dt-sel[data-s="fixed"]{color:var(--st-fixed);background:var(--st-fixed-bg);border-color:#c4d9f0}
+.dt-sel[data-s="done"] {color:var(--st-done); background:var(--st-done-bg); border-color:#bde0cd}
+.dt-sel[data-s="block"]{color:var(--st-block);background:var(--st-block-bg);border-color:#f2c4c4}
+.dt-sel:disabled[data-s]{color:var(--ink-3);background:var(--st-na-bg);border-color:var(--line)}
+.dt-pick{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.dt-pick .lb{font-size:11.5px;color:var(--ink-3)}
+.dt-pick .ck{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+  color:var(--ink-2);cursor:pointer;user-select:none;-webkit-user-select:none}
+.dt-pick .ck input{margin:0;cursor:pointer;accent-color:var(--accent)}
+.dt-pick .ck input:disabled{cursor:not-allowed}
+
+
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap" id="app"></div>
+
+<script>
+'use strict';
+
+
+/* 무슨 일이 있어도 빈 화면은 안 나오게 한다 */
+function fatal(where, e){
+  var a = document.getElementById('app');
+  if (!a) return;
+  a.innerHTML = '';
+  var g = document.createElement('div');
+  g.className = 'gate';
+  g.innerHTML = '<h2>화면을 그리지 못했습니다</h2><p>' + where +
+    '<br><b>' + (e && (e.name + ': ' + e.message) || e) + '</b></p>' +
+    '<p class="hint">이 글자를 그대로 알려 주시면 고치겠습니다.</p>';
+  a.appendChild(g);
+  console.error(where, e);
+}
+window.addEventListener('error', function(ev){ fatal('스크립트 오류', ev.error || ev.message); });
+window.addEventListener('unhandledrejection', function(ev){ fatal('처리되지 않은 오류', ev.reason); });
+
+/* ================= 저장소 ================= */
+var DIR = null;
+
+function withTimeout(p, ms, tag){
+  return Promise.race([p, new Promise(function(_, rej){
+    setTimeout(function(){ rej(new Error(tag + ' 시간 초과')); }, ms);
+  })]);
+}
+function idb(mode, fn){
+  return new Promise(function(res, rej){
+    var r;
+    try { r = indexedDB.open('pm-board', 1); } catch (e) { rej(e); return; }
+    r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
+    r.onblocked = function(){ rej(new Error('IndexedDB 가 다른 탭에 잠겨 있습니다')); };
+    r.onerror = function(){ rej(r.error || new Error('IndexedDB 열기 실패')); };
+    r.onsuccess = function(){
+      try {
+        var tx = r.result.transaction('kv', mode);
+        var q = fn(tx.objectStore('kv'));
+        q.onsuccess = function(){ res(q.result); };
+        q.onerror = function(){ rej(q.error); };
+      } catch (e) { rej(e); }
+    };
+  });
+}
+function rememberDir(h){ return idb('readwrite', function(s){ return s.put(h, 'dir'); }); }
+function recallDir(){ return idb('readonly', function(s){ return s.get('dir'); }); }
+
+async function pickDir(){
+  var h = await window.showDirectoryPicker({ mode:'readwrite', id:'pm-board-root' });
+  await rememberDir(h);
+  DIR = h;
+  return h;
+}
+async function readText(parts){
+  var d = DIR;
+  for (var i = 0; i < parts.length - 1; i++) d = await d.getDirectoryHandle(parts[i]);
+  var fh = await d.getFileHandle(parts[parts.length - 1]);
+  return (await fh.getFile()).text();
+}
+async function writeText(parts, text){
+  var d = DIR;
+  for (var i = 0; i < parts.length - 1; i++) d = await d.getDirectoryHandle(parts[i], { create:true });
+  var fh = await d.getFileHandle(parts[parts.length - 1], { create:true });
+  var w = await fh.createWritable();
+  await w.write(text);
+  await w.close();
+}
+
+/* ================= 날짜 ================= */
+function todayISO(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function nowHM(){
+  var d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function mmdd(iso){ return iso ? iso.slice(5).replace('-','/') : ''; }
+function daysLeft(iso){
+  if (!iso) return null;
+  return Math.round((new Date(iso + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 86400000);
+}
+
+
+var SORDER = ['idle','doing','done'];
+var SLABEL = { idle:'대기', doing:'진행 중', done:'완료', block:'보류', na:'해당 없음' };
+var SMARK  = { idle:'○', doing:'◐', done:'●', block:'✕', na:'·' };
+
+var TORDER = ['idle','doing','done'];
+var TLABEL = { idle:'대기', doing:'진행 중', fixed:'수정 완료', done:'완료', block:'보류' };
+var TMARK  = { idle:'', doing:'/', fixed:'~', done:'V', block:'!' };
+var MDMARK = { idle:'⬜', doing:'⏳', fixed:'🔧', done:'✅', block:'⛔', na:'➖' };
+
+/* ── QA 칸은 상태가 넷이다 (2026-08-31 확정 사항 · docs/기능정의서.md) ──
+   대기      QA 포인트가 정해졌다
+   진행 중   수정 개발이 시작됐다
+   수정 완료 수정 개발이 끝났다. **아직 검증 전이다**
+   검증 완료 검증 담당자가 컨펌했다. 여기서만 다음 칸으로 넘어간다
+
+   ⚠️ 그 전에는 QA 도 상태가 셋뿐이라, 수정 개발이 끝났다고 완료를 찍으면
+      검증 없이 릴리즈 대기로 넘어갔다. 수정 완료가 그 사이를 막는다. */
+var QA_ORDER = ['idle','doing','fixed','done','block'];
+var QLABEL = { idle:'대기', doing:'진행 중', fixed:'수정 완료', done:'검증 완료', block:'보류' };
+
+
+/* ================= 그리기 ================= */
+function el(tag, cls, txt){
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt !== undefined && txt !== null) n.textContent = txt;
+  return n;
+}
+
+/* ───── 인라인 편집 ─────
+   더블클릭하면 그 자리만 고쳐진다. Enter 확정 · Shift+Enter 줄바꿈 · Esc 취소.
+   콘솔의 ?edit=1 과 조작을 같게 맞췄다. 다만 여기는 코드로 옮길 필요가 없다.
+   확정하는 순간 board.json 이 곧바로 바뀐다. */
+function editable(node, obj, key, ph){
+  node.classList.add('ed');
+  if (ph) node.setAttribute('data-ph', ph);
+  if (!node.textContent) node.classList.add('empty');
+  /* 툴팁을 달지 않는다. 글자마다 말풍선이 뜨면 읽는 데 방해가 된다.
+     조작 방법은 화면 맨 아래 안내에 한 번만 적는다. */
+
+  node.ondblclick = function(ev){
+    ev.stopPropagation();
+    if (node.isContentEditable) return;
+    var before = obj[key] || '';
+    node.classList.remove('empty');
+    node.removeAttribute('data-ph');
+    node.setAttribute('contenteditable', 'plaintext-only');
+    node.classList.add('live');
+    node.focus();
+
+    var r = document.createRange();
+    r.selectNodeContents(node);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+
+    node.onkeydown = function(e){
+      if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); node.blur(); }
+      else if (e.key === 'Escape'){ e.preventDefault(); node.textContent = before; node.blur(); }
+    };
+    node.onblur = function(){
+      var now = (node.innerText || '').replace(/ /g, ' ').replace(/\n+$/, '').trim();
+      node.removeAttribute('contenteditable');
+      node.classList.remove('live');
+      node.onkeydown = null;
+      node.onblur = null;
+      if (now === before){ render(); return; }
+      obj[key] = now;
+      render(); touch();
+    };
+  };
+  /* 클릭이 밑의 접기·펼치기로 새 나가지 않게 한다.
+     안 막으면 더블클릭할 때 클릭이 두 번 발생해 화면이 두 번 다시 그려지고,
+     그 사이에 눌렀던 요소가 사라져 편집이 시작되지 않는다. */
+  node.onclick = function(ev){ ev.stopPropagation(); };
+  return node;
+}
+
+/* 그 단계의 다음 작업 코드를 만든다. 예) BE-1.6 */
+
+function refEl(t){
+  var d = el('div','tref');
+  var s = t.ref || '';
+  if (s){
+    s.split(/(\s+)/).forEach(function(p){
+      if (/^https?:\/\//.test(p)){
+        var a = document.createElement('a');
+        a.href = p;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = p;
+        d.appendChild(a);
+      } else {
+        d.appendChild(document.createTextNode(p));
+      }
+    });
+  }
+  return editable(d, t, 'ref', '파일 경로 · 문서 절 · 링크 (더블클릭)');
+}
+
+/* 커밋 줄. "Github 커밋  이동" 에서 이동만 링크다.
+   릴리즈 단계에 든 것은 main 머지 커밋이고, 나머지 단계는 feature 커밋이다.
+   여러 번에 걸쳐 만든 작업이면 이동이 여러 개 붙는다. */
+function commitEl(t){
+  var hs = t.commits || [];
+  if (!hs.length) return null;
+  var base = (B.repoUrl || '').replace(/\/+$/, '');
+  var d = el('div','tcommit');
+  d.appendChild(el('span','clab','Github 커밋'));
+  hs.forEach(function(h, i){
+    if (i) d.appendChild(document.createTextNode(' · '));
+    else d.appendChild(document.createTextNode('  '));
+    if (base){
+      var a = document.createElement('a');
+      a.href = base + '/commit/' + h;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = '이동';
+      a.title = h;
+      a.onclick = function(ev){ ev.stopPropagation(); };
+      d.appendChild(a);
+    } else {
+      d.appendChild(document.createTextNode(h));
+    }
+  });
+  return d;
+}
+
+/* 이 머지(또는 커밋)에 함께 실린 작업들. 릴리즈 칸에 쓴다.
+   한 번 머지할 때 여러 작업이 같이 나가므로 코드 배지를 나열한다. */
+function includesEl(t){
+  var cs = t.includes || [];
+  if (!cs.length) return null;
+  var d = el('div','tinc');
+  d.appendChild(el('span','clab','함께 나감'));
+  cs.forEach(function(c){
+    d.appendChild(el('span','code ' + String(c).split('-')[0], c));
+  });
+  return d;
+}
+
+
+
+/* ================= 화면 글자 =================
+   화면에 박히는 말은 전부 여기에 모은다. kanban.json 의 ui 가 정본이고
+   여기 값은 처음 한 번 채워 넣는 기본값이다. */
+var UI_DEF = {
+  title: '프로젝트 진행 현황',
+  colPlan: '기획',
+  colDev: '개발',
+  colQa: 'QA',
+  colWait: '릴리즈 대기',
+  colDone: '배포 완료',
+  colEmpty: '',
+  btnSave: '다시 저장',
+  saving: '저장 중',
+  savedOk: '저장됨',
+  saveFail: '저장 실패',
+  loaded: '불러왔습니다',
+  stale: '파일이 밖에서 바뀌었습니다. F5 로 다시 읽어 주세요',
+  lockWait: '다른 세션이 저장 중입니다. 기다립니다',
+  lockBusy: '다른 세션이 계속 저장 중이라 저장하지 못했습니다. 잠시 뒤 다시 해 주세요',
+  detNone: '아직 없습니다',
+  qaAdd: '+ 회차',
+  detAdd: '이 칸 만들기',
+  detRef: '참고',
+  detCommit: '커밋',
+  detIncl: '함께 나감',
+  stLocked: '앞 단계가 끝나야 켤 수 있습니다',
+  devWho: '누가 하나',
+  devFe: '클라',
+  devBe: '서버',
+  stepMake: '이 칸 만들기',
+};
+
+function uiv(key){
+  if (!B.ui) B.ui = {};
+  if (B.ui[key] === undefined) B.ui[key] = UI_DEF[key];
+  return B.ui[key];
+}
+function uiEl(tag, cls, key){
+  return editable(el(tag, cls, uiv(key)), B.ui, key);
+}
+
+/* ================= 데이터 =================
+   일감(job) 하나가 카드다. 그 안에 다섯 칸(steps)이 들어 있다.
+   칸 키는 board.json 때와 같다. sync-commits.js 가 그 이름을 읽는다. */
+var B = null;
+var SEL = null;              /* 지금 열려 있는 상세의 일감 */
+
+var STEP_KEYS = ['plan', 'fe', 'be', 'qa', 'release'];
+var STEP_OF = { plan:'PL', fe:'FE', be:'BE', qa:'QA', release:'RL' };
+var STEP_LABEL = { plan:'기획', fe:'클라', be:'서버', qa:'QA', release:'릴리즈' };
+
+var COLS = [
+  { key:'plan', ui:'colPlan' },
+  { key:'dev',  ui:'colDev'  },
+  { key:'qa',   ui:'colQa'   },
+  { key:'wait', ui:'colWait' },
+  { key:'done', ui:'colDone' },
+];
+
+/* 그 칸이 끝났나.
+   ⚠️ QA 칸은 **회차가 하나라도 안 끝나면 끝난 것이 아니다.** 회차를 새로 만들면
+      릴리즈 대기까지 갔던 일감도 QA 로 되돌아온다. (docs/기능정의서.md)
+   ⚠️ sync-commits.js 의 isDone 과 같은 규칙이다. 한쪽만 고치면 화면과 데이터가 갈린다. */
+function isDone(st){
+  if (!st || st.status !== 'done') return false;
+  var rs = st.rounds || [];
+  for (var i = 0; i < rs.length; i++){ if (rs[i].status !== 'done') return false; }
+  return true;
+}
+function hasDev(j){ return !!(j.steps.fe || j.steps.be); }
+
+/* 개발 배지. 클라·서버 둘 다면 FS(풀스택). */
+function devBadge(j){
+  var fe = !!j.steps.fe, be = !!j.steps.be;
+  if (fe && be) return 'FS';
+  if (fe) return 'FE';
+  if (be) return 'BE';
+  return null;
+}
+
+/* 이 일감이 지금 어느 칸에 서 있나.
+   안 끝난 가장 앞 칸이 그 자리다. 사람이 끌어 옮기지 않는다.
+   ⚠️ 칸이 비어 있으면 거기서 멈춘다. 그것이 이 구조를 만든 이유다. */
+function colOf(j){
+  var s = j.steps;
+  if (s.plan && !isDone(s.plan)) return 'plan';
+  if ((s.fe && !isDone(s.fe)) || (s.be && !isDone(s.be))) return 'dev';
+  if (!s.qa || !isDone(s.qa)) return 'qa';
+  if (!s.release || !isDone(s.release)) return 'wait';
+  return 'done';
+}
+
+
+function eachStep(fn){
+  (B.jobs || []).forEach(function(j){
+    STEP_KEYS.forEach(function(k){ if (j.steps[k]) fn(j.steps[k], k, j); });
+  });
+}
+
+function secOf(j){
+  return (B.sections || []).filter(function(s){ return s.no === j.sec; })[0] || null;
+}
+
+/* ================= 잠금 ================= */
+/* kanban.json 을 고치기 전에 pm/kanban.lock 을 잡는다. (2026-09-01 결정 사항)
+
+   PO 는 스크립트로, PM 은 이 화면으로 같은 파일을 고친다. 겹치면 나중에 저장한 쪽이
+   먼저 것을 덮어쓴다. 2026-08-27 에 커밋 30건과 repoUrl 이 그렇게 사라졌다.
+
+   ⚠️ 잠금을 kanban.json 안에 두지 않는다. 잠금을 잡는 행위가 곧 그 파일을 쓰는 것이라,
+      두 쪽이 같이 "비어 있네" 하고 각자 써 버리면 막으려던 사고가 그대로 난다.
+
+   ⚠️ 이 알고리즘은 pm/lock.js 와 한 벌이다. 브라우저는 그 파일을 불러올 수 없어
+      (File System Access API 로만 파일에 닿는다) 여기 한 번 더 적었다.
+      값(20초 · 150ms · 300ms · 60초)과 순서가 같아야 서로를 알아본다.
+      **한쪽을 고치면 다른 쪽도 같이 고친다.** */
+var LOCK_TTL = 20000;      /* 20초가 지난 잠금은 그 세션이 멈춘 것으로 보고 뺏는다 */
+var LOCK_SETTLE = 150;     /* 쓴 뒤 이만큼 두었다 다시 읽어 내 것이 남았는지 본다 */
+/* 남이 잡고 있으면 이 주기로 풀렸는지 다시 본다.
+   ⚠️ 만료(20초)까지 통째로 기다리지 않는다. 상대는 대개 1초 안에 끝내고 푸는데
+      20초를 자면 그만큼 헛기다린다. 2026-09-01 실측 — 3초 만에 풀린 잠금을
+      20.1초 기다려 잡았다. 이 화면은 글자를 칠 때마다 저장하므로 그동안 멈춘다. */
+var LOCK_POLL = 300;
+var LOCK_WAIT_MAX = 60000; /* 여기까지 못 잡으면 포기하고 사람에게 알린다 */
+
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+async function removeFile(parts){
+  var d = DIR;
+  for (var i = 0; i < parts.length - 1; i++) d = await d.getDirectoryHandle(parts[i]);
+  await d.removeEntry(parts[parts.length - 1]);
+}
+
+async function lockRead(){
+  try {
+    var cur = JSON.parse(await readText(['pm','kanban.lock']));
+    return (cur && cur.id) ? cur : null;
+  } catch (e) {
+    /* 파일이 없거나 쓰는 도중이라 깨져 보이면 안 걸린 것으로 본다.
+       깨진 채 남아도 다음 사람이 덮어써서 저절로 풀린다. */
+    return null;
+  }
+}
+function lockAge(cur){
+  var t = Date.parse(cur.at);
+  return isFinite(t) ? (Date.now() - t) : (LOCK_TTL + 1);
+}
+
+/* 잡으면 { by, id, at } 을, 못 잡으면 null 을 준다. */
+async function lockAcquire(who, onWait){
+  var id = Math.random().toString(36).slice(2, 10);
+  var giveUp = Date.now() + LOCK_WAIT_MAX;
+  for (;;){
+    var cur = await lockRead();
+    if (cur && cur.id !== id && lockAge(cur) < LOCK_TTL){
+      /* 남이 잡고 있고 아직 안 만료됐다. 풀렸는지 짧게짧게 다시 본다. */
+      if (Date.now() >= giveUp) return null;
+      if (onWait) onWait(cur);
+      await wait(LOCK_POLL);
+      continue;
+    }
+    var mine = { by: who, id: id, at: new Date().toISOString() };
+    try { await writeText(['pm','kanban.lock'], JSON.stringify(mine) + '\n'); }
+    catch (e) { return null; }
+    await wait(LOCK_SETTLE);
+    var after = await lockRead();
+    if (after && after.id === id) return mine;
+    /* 상대가 거의 같은 순간에 썼고 그쪽이 뒤였다. 양보하고 다시 본다. */
+    if (Date.now() >= giveUp) return null;
+  }
+}
+
+/* ⚠️ 내 것일 때만 지운다. 만료로 뺏긴 뒤라면 남의 잠금이라 손대지 않는다. */
+async function lockRelease(mine){
+  if (!mine) return;
+  var cur = await lockRead();
+  if (cur && cur.id !== mine.id) return;
+  try { await removeFile(['pm','kanban.lock']); } catch (e) { /* 이미 없으면 그만이다 */ }
+}
+
+/* ================= 저장 ================= */
+var saveTimer = null;
+var LOADED_STAMP = null;
+/* 저장이 도는 동안 또 저장이 들어오면 겹친다. 잠금을 기다리느라 최대 1분까지
+   붙잡고 있을 수 있어 전보다 겹치기 쉬워졌다. 한 번에 하나만 돌리고,
+   그동안 들어온 수정은 끝난 뒤에 한 번 더 저장한다. */
+var SAVING = false;
+var DIRTY = false;
+
+function setSaved(msg, cls){
+  var n = document.getElementById('saved');
+  if (!n) return;
+  n.textContent = msg;
+  n.className = 'saved' + (cls ? ' ' + cls : '');
+}
+
+async function save(){
+  if (SAVING){ DIRTY = true; return; }
+  SAVING = true;
+  try { await saveOnce(); }
+  finally {
+    SAVING = false;
+    if (DIRTY){ DIRTY = false; touch(); }
+  }
+}
+
+async function saveOnce(){
+  /* ① 먼저 잠금을 잡는다. 다른 세션이 고치는 중이면 기다렸다 다시 본다.
+     겹칠 자리를 아예 줄이는 것이 목적이고, 아래 updatedAt 이 마지막 관문이다. */
+  var lock = await lockAcquire('PM', function(cur){
+    setSaved(uiv('lockWait') + ' (' + (cur.by || '?') + ')');
+  });
+  if (!lock){
+    setSaved(uiv('lockBusy'), 'err');
+    return;
+  }
+
+  try {
+    /* ② ⚠️ 저장하기 전에 파일이 밖에서 바뀌었는지 본다.
+       Claude 나 다른 창이 kanban.json 을 고쳤는데 이 화면이 옛 내용을 들고 있으면,
+       그대로 저장하는 순간 남의 수정이 흔적 없이 지워진다. board 에서 실제로 겪었다.
+
+       ⚠️ 잠금이 있어도 이 검사를 뺄 수 없다. 잠금은 20초가 지나면 뺏기고,
+          그 사이에 상대가 파일을 고쳤을 수 있다. */
+    try {
+      var onDisk = await readText(['pm','kanban.json']);
+      var stamp = JSON.parse(onDisk).updatedAt;
+      if (LOADED_STAMP !== null && stamp !== LOADED_STAMP){
+        setSaved(uiv('stale'), 'err');
+        return;
+      }
+    } catch (e) { /* 파일이 없거나 못 읽으면 그냥 저장한다 */ }
+
+    B.updatedAt = todayISO() + ' ' + nowHM();
+    try {
+      setSaved(uiv('saving'));
+      await writeText(['pm','kanban.json'], JSON.stringify(B, null, 2));
+      LOADED_STAMP = B.updatedAt;
+      setSaved(uiv('savedOk') + ' ' + nowHM(), 'on');
+    } catch (e) {
+      setSaved(uiv('saveFail') + ' (' + e.name + ')', 'err');
+      console.error(e);
+    }
+  } finally {
+    await lockRelease(lock);
+  }
+}
+function touch(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 250); }
+
+/* ================= 그리기 ================= */
+
+/* 단계 배지 하나. 없는 칸은 자리만 남겨 흐리게 둔다. */
+function stepBadge(j, key){
+  var s = j.steps[key];
+  var name = key === 'dev' ? (devBadge(j) || 'FE/BE') : STEP_OF[key];
+  if (key === 'dev'){
+    var b = devBadge(j);
+    if (!b) return el('span','st off miss', 'FE/BE');
+    var n = el('span','st ' + b, b);
+    var doneBoth = (!j.steps.fe || isDone(j.steps.fe)) && (!j.steps.be || isDone(j.steps.be));
+    n.appendChild(el('span','mk', doneBoth ? '●' : '◐'));
+    return n;
+  }
+  if (!s) return el('span','st off' + (key === 'release' ? '' : ' miss'), name);
+  var node = el('span','st ' + name, name);
+  node.appendChild(el('span','mk', SMARK[s.status] || ''));
+  return node;
+}
+
+/* 카드에는 제목과 일감 번호만 둔다.
+   단계 배지와 메뉴 이름은 뺐다. 어느 칸에 서 있는지가 이미 진행을 말하고,
+   메뉴 이름은 이 칸반이 걸린 자리에 적혀 있다. 2026-08-28 결정 사항. */
+/* 배포 완료 표시. 태그가 있으면 태그를, 없으면 배포한 날을 보여 준다.
+   ⚠️ 2026-08-28 까지는 태그를 안 붙였다. 그때 것은 날짜만 나온다. (docs/기능정의서.md) */
+/* 마지막으로 나간 배포가 적힌 칸. 회차가 있으면 마지막 회차다. */
+function lastRel(j){
+  var r = j.steps.release;
+  if (!r) return null;
+  var rs = r.rounds || [];
+  return rs.length ? rs[rs.length - 1] : r;
+}
+
+/* 카드 오른쪽 위 배지. 태그가 있으면 태그, 없으면 나간 날짜다.
+   ⚠️ **마지막 배포**를 보인다. 다시 배포하면 배지가 갱신된다. (2026-08-31) */
+function shipMark(j){
+  var r = j.steps.release;
+  if (!r || !isDone(r)) return null;
+  var e = lastRel(j);
+  if (e.shippedTag) return e.shippedTag;
+  var d = e.shippedAt || e.doneAt;
+  if (!d) return null;
+  var p = String(d).slice(0, 10).split('-');
+  return p.length === 3 ? (+p[1]) + '/' + (+p[2]) : String(d);
+}
+
+function jobCard(j){
+  var c = el('div','jc' + (SEL === j ? ' on' : ''));
+  var t = el('div','jc-t');
+  t.appendChild(el('span','jc-tx', j.title || '(제목 없음)'));
+  var mk = shipMark(j);
+  if (mk) t.appendChild(el('span','ship' + (lastRel(j).shippedTag ? ' tag' : ''), mk));
+  c.appendChild(t);
+  c.appendChild(el('div','jc-s', j.no));
+  c.onclick = function(){ SEL = j; render(); };
+  return c;
+}
+
+/* 칸반 한 벌. 넘겨받은 일감들만 다섯 칸에 나눠 담는다. */
+function kanban(list){
+  var wrap = el('div','kb');
+  COLS.forEach(function(C){
+    var mine = list.filter(function(j){ return colOf(j) === C.key; });
+    /* QA 칸에 쌓인 것은 더 못 가고 서 있는 것이라 숫자를 붉게 한다.
+       ⚠️ 클래스 이름을 warn 으로 두면 안 된다. board 에서 가져온 .warn 규칙이
+          앞에 기호를 붙이고 배경을 칠해 칸 머리가 깨진다. 2026-08-28 실제로 그랬다. */
+    var col = el('div','kb-col' + (C.key === 'qa' && mine.length ? ' stuck' : ''));
+    var h = el('div','kb-h');
+    h.appendChild(uiEl('b', null, C.ui));
+    h.appendChild(el('span','kb-n', String(mine.length)));
+    col.appendChild(h);
+    if (!mine.length && uiv('colEmpty')) col.appendChild(el('div','kb-e', uiv('colEmpty')));
+    mine.forEach(function(j){ col.appendChild(jobCard(j)); });
+    wrap.appendChild(col);
+  });
+  return wrap;
+}
+
+/* 섹션 > 화면 순서로 칸반을 늘어놓는다.
+   한 칸반에 57개를 다 넣으면 무엇이 어느 메뉴 일인지 알 수 없다. 2026-08-28 결정 사항. */
+function allKanbans(){
+  var box = el('div');
+  var list = (B.jobs || []);
+
+  (B.sections || []).forEach(function(sec){
+    var inSec = list.filter(function(j){ return j.sec === sec.no; });
+    /* 섹션 하나가 판 하나다. 머리와 그 안의 칸반이 같은 판에 든다. */
+    var tray = el('div','kb-sec' + (sec.folded ? ' shut' : ''));
+    var ht = el('div','kb-sech');
+    ht.appendChild(el('span','kb-cv', '▸'));
+    ht.appendChild(el('span','kb-secno', sec.no));
+    ht.appendChild(editable(el('span','kb-sect', sec.title || ''), sec, 'title', '메뉴 이름'));
+    ht.appendChild(el('span','kb-secn', inSec.length + '건'));
+    if (sec.dueLabel) ht.appendChild(el('span','kb-secd', sec.dueLabel));
+    ht.onclick = function(){ sec.folded = !sec.folded; touch(); render(); };
+    tray.appendChild(ht);
+    box.appendChild(tray);
+    if (sec.folded) return;
+
+    (sec.screens || []).forEach(function(sc){
+      var mine = inSec.filter(function(j){ return j.screen === sc.name; });
+      tray.appendChild(editable(el('div','kb-scr', sc.name || ''), sc, 'name', '화면 이름'));
+      tray.appendChild(kanban(mine));
+    });
+  });
+  return box;
+}
+
+/* ── 상세 ──
+   네 묶음으로 본다. PL · DEV · QA · RL.
+   DEV 안에 클라(fe)와 서버(be)가 들어간다. 둘 다인 일감이 있어 체크박스로 둔다.
+   ⚠️ 라디오가 아니다. 둘 다 골라야 하는 일감이 지금 18개다. */
+var GROUPS = [
+  { key:'plan',    label:'기획',   keys:['plan'] },
+  { key:'dev',     label:'개발',   keys:['fe','be'] },
+  { key:'qa',      label:'QA',     keys:['qa'] },
+  { key:'release', label:'릴리즈', keys:['release'] },
+];
+
+/* 이 묶음이 끝났나. 안에 든 칸이 하나도 없으면 안 끝난 것이다. */
+function groupDone(j, g){
+  var any = false, all = true;
+  g.keys.forEach(function(k){
+    if (!j.steps[k]) return;
+    any = true;
+    if (!isDone(j.steps[k])) all = false;
+  });
+  return any && all;
+}
+
+/* 앞 묶음이 다 끝났나. 안 끝났으면 이 묶음은 아직 손댈 수 없다. */
+function prevDone(j, gi){
+  for (var i = 0; i < gi; i++){ if (!groupDone(j, GROUPS[i])) return false; }
+  return true;
+}
+
+/* 진행 상태 드롭다운. 앞 단계가 안 끝났으면 잠근다.
+   qa 를 켜면 상태가 넷이 된다 — 위 QLABEL 을 보라. */
+function statusSelect(step, locked, qa){
+  var sel = document.createElement('select');
+  sel.className = 'dt-sel';
+  var order = qa ? QA_ORDER : ['idle','doing','done','block'];
+  var label = qa ? QLABEL : TLABEL;
+  /* 옛 데이터에 없던 값이 들어 있어도 고른 것이 사라지지 않게 한다 */
+  if (order.indexOf(step.status) < 0) order = order.concat([step.status]);
+  order.forEach(function(v){
+    var o = document.createElement('option');
+    o.value = v; o.textContent = label[v] || v;
+    if (step.status === v) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.setAttribute('data-s', step.status);
+  if (locked){ sel.disabled = true; sel.title = uiv('stLocked'); }
+  sel.onchange = function(){
+    step.status = sel.value;
+    /* 끝난 날을 적는다. 되돌리면 지운다.
+       QA 의 수정 완료도 그날을 적는다 — 고치기가 끝난 날이 남아야 한다.
+       ⚠️ 커밋이 붙어 찍힌 것은 sync-commits.js 가 다시 채운다. */
+    if (sel.value === 'done' || sel.value === 'fixed'){ if (!step.doneAt) step.doneAt = todayISO(); }
+    else { step.doneAt = null; }
+    touch(); render();
+  };
+  return sel;
+}
+
+/* ── QA 회차 ──
+   1회차는 QA-1.2 그 자체다. 되돌아올 때마다 셋째 자리가 붙는다. QA-1.2.1 이 2회차다.
+   회차마다 **그 회차에서 새로 고친 것**을 적는다. 앞 회차 글을 고쳐 쓰지 않는다.
+   (2026-08-31 확정 사항 · docs/기능정의서.md) */
+function roundLabel(n, manual){ return (n + 1) + (manual ? '회차' : '차 배포'); }
+
+function nextRoundN(s){
+  var n = 0;
+  (s.rounds || []).forEach(function(r){ if (r.n > n) n = r.n; });
+  return n + 1;
+}
+
+function roundBox(j, s, r, locked, manual){
+  var box = el('div','dt-r');
+  var h = el('div','dt-sh');
+  h.appendChild(el('span','st ' + String(r.code).split('-')[0], r.code));
+  h.appendChild(el('span','rn', roundLabel(r.n, manual)));
+  /* 릴리즈 회차는 sync-commits 가 만들고 찍는다. 사람이 바꿀 것이 아니다.
+     manual 인 회차는 QA 회차뿐이라 상태가 넷이다. */
+  if (manual) h.appendChild(statusSelect(r, locked, true));
+  else h.appendChild(el('span','dt-ro', TLABEL[r.status] || r.status));
+  if (r.shippedTag) h.appendChild(el('span','ship tag', r.shippedTag));
+  h.appendChild(el('span','sp'));
+  if (r.doneAt) h.appendChild(el('span','when', r.doneAt));
+  /* ⚠️ 기록이 든 회차는 지우지 못한다. 커밋이 사라지면 안 된다. devPick 과 같은 잠금이다.
+
+     ⚠️ 릴리즈 회차에는 지우는 자리를 두지 않는다. (2026-09-01 결정 사항)
+        채울 배포가 없어 비어 있는 회차는 sync-commits.js 가 알아서 지운다.
+        그 판정에 필요한 것(그 일감의 커밋이 전부 main 에 나갔는가 · 그 뒤로 새 push 가
+        있는가)이 전부 스크립트 쪽에 있다. 사람이 화면만 보고 가릴 수 있는 것이 아니다.
+        2026-09-01 에 여기에 × 를 붙였다가 되돌렸다. 스스로 고칠 수 있는 것을
+        사람 손으로 치우게 만든 것이었다. */
+  if (manual && !((r.commits || []).length || r.desc || r.title)){
+    var x = el('button','dt-rx','×');
+    x.title = '이 회차 지우기';
+    x.onclick = function(ev){
+      ev.stopPropagation();
+      s.rounds = (s.rounds || []).filter(function(o){ return o !== r; });
+      /* 짝으로 만든 릴리즈 회차도 함께 지운다. 아직 안 나간 것만 지운다. */
+      var rl = j.steps.release;
+      if (rl && rl.rounds) rl.rounds = rl.rounds.filter(function(o){
+        return !(o.n === r.n && o.status !== 'done' && !o.shippedCommit);
+      });
+      touch(); render();
+    };
+    h.appendChild(x);
+  }
+  box.appendChild(h);
+  box.appendChild(editable(el('div','dt-tt', r.title || ''), r,
+                  'title', manual ? '이 회차에 무엇을 고쳤나' : '이 배포에 무엇이 나갔나'));
+  if (r.desc || document.body.classList.contains('editing'))
+    box.appendChild(editable(el('div','dt-d', r.desc || ''), r, 'desc', '자세히'));
+  var ce = commitEl(r);
+  if (ce) box.appendChild(ce);
+  return box;
+}
+
+function roundsEl(j, s, locked, manual){
+  var wrap = el('div','dt-rs');
+  (s.rounds || []).forEach(function(r){ wrap.appendChild(roundBox(j, s, r, locked, manual)); });
+  /* ⚠️ 릴리즈 회차는 버튼이 없다. main 에 다시 나간 것을 sync-commits 가 알아서 만든다.
+     사람이 만들면 안 나간 배포가 생긴다. (docs/기능정의서.md) */
+  if (!manual) return wrap;
+  var add = el('button','dt-radd', uiv('qaAdd'));
+  add.title = 'QA 가 한 번 더 돌아왔을 때 만듭니다';
+  if (locked){ add.disabled = true; add.title = uiv('stLocked'); }
+  add.onclick = function(ev){
+    ev.stopPropagation();
+    /* ⚠️ 이미 QA 를 지나간 일감은 되돌아온다. 실수로 눌러 배포 완료가 풀리면 안 된다. */
+    if (j.col === 'wait' || j.col === 'done'){
+      if (!confirm('회차를 만들면 이 일감이 QA 로 되돌아옵니다. 계속할까요?')) return;
+    }
+    var n = nextRoundN(s);
+    if (!s.rounds) s.rounds = [];
+    s.rounds.push({ code: s.code + '.' + n, n: n, title:'', desc:'', ref:'',
+                    status:'idle', doneAt:null, commits:[], createdAt: todayISO() });
+    /* ⚠️ 릴리즈 회차를 짝으로 함께 만든다. 고친 것은 **다시 배포해야** 하기 때문이다.
+       짝이 없으면 이 회차를 완료로 바꾸는 순간 옛 릴리즈가 완료라서 배포 완료로 가 버린다.
+       2026-08-31 실사고 — QA-1.6.1 을 완료로 바꾸자 1.6 이 곧바로 배포 완료로 갔다.
+       ⚠️ 한 번도 안 나간 일감에는 안 만든다. 그때는 기본 RL 이 곧 그 배포다. */
+    var rl = j.steps.release;
+    if (rl && rl.status === 'done' && !(rl.rounds || []).some(function(o){ return o.n === n; })){
+      if (!rl.rounds) rl.rounds = [];
+      rl.rounds.push({ code: rl.code + '.' + n, n: n, title:'', desc:'', ref:'',
+                       status:'idle', doneAt:null, commits:[], includes:[], createdAt: todayISO() });
+      rl.rounds.sort(function(a2, b2){ return a2.n - b2.n; });
+    }
+    touch(); render();
+  };
+  wrap.appendChild(add);
+  return wrap;
+}
+
+/* 칸 하나. 없으면 "아직 없습니다" 만 둔다. 만드는 것은 PO 몫이라 여기서 만들지 않는다. */
+function stepBox(j, key, locked){
+  var s = j.steps[key];
+  var box = el('div','dt-s' + (s ? '' : ' none'));
+  var h = el('div','dt-sh');
+  h.appendChild(el('span','st ' + (s ? STEP_OF[key] : 'off'), (s && s.code) || STEP_OF[key]));
+  if (s) h.appendChild(statusSelect(s, locked, key === 'qa'));
+  /* 릴리즈 칸에는 그 배포의 태그를 함께 둔다. 해시는 사람이 못 외운다. */
+  if (s && key === 'release' && s.shippedTag) h.appendChild(el('span','ship tag', s.shippedTag));
+  if (s && s.doneAt) h.appendChild(el('span','when', s.doneAt));
+  box.appendChild(h);
+
+  if (!s){
+    box.appendChild(el('div','dt-d', uiv('detNone')));
+    return box;
+  }
+  box.appendChild(editable(el('div','dt-tt', s.title || ''), s, 'title', '무엇을 하나'));
+  if (s.desc || document.body.classList.contains('editing'))
+    box.appendChild(editable(el('div','dt-d', s.desc || ''), s, 'desc', '자세히'));
+  /* ⚠️ 이 셋은 담을 것이 없으면 null 을 돌려준다. 그대로 붙이면 화면이 죽는다. */
+  [refEl(s), commitEl(s), includesEl(s)].forEach(function(n){ if (n) box.appendChild(n); });
+  /* QA 와 릴리즈만 회차를 쌓는다. QA 는 사람이, 릴리즈는 sync-commits 가 만든다. */
+  if (key === 'qa') box.appendChild(roundsEl(j, s, locked, true));
+  if (key === 'release' && (s.rounds || []).length) box.appendChild(roundsEl(j, s, locked, false));
+  return box;
+}
+
+/* 개발 묶음의 클라·서버 고르기. 켜면 그 칸을 만들고 끄면 없앤다.
+   ⚠️ 내용이 든 칸은 끄지 못한다. 실수로 커밋 기록이 사라지면 안 된다. */
+function devPick(j){
+  var row = el('div','dt-pick');
+  row.appendChild(el('span','lb', uiv('devWho')));
+  [['fe', 'devFe'], ['be', 'devBe']].forEach(function(p){
+    var k = p[0];
+    var lab = el('label','ck');
+    var box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = !!j.steps[k];
+    var heavy = !!(j.steps[k] && ((j.steps[k].commits || []).length || j.steps[k].desc));
+    if (heavy){ box.disabled = true; lab.title = '기록이 들어 있어 끌 수 없습니다'; }
+    box.onchange = function(){
+      if (box.checked){
+        j.steps[k] = { code: STEP_OF[k] + '-' + j.no, title:'', desc:'', ref:'',
+                       status:'idle', doneAt:null, commits:[], includes:[], createdAt: todayISO() };
+      } else {
+        delete j.steps[k];
+      }
+      touch(); render();
+    };
+    lab.appendChild(box);
+    lab.appendChild(document.createTextNode(uiv(p[1])));
+    row.appendChild(lab);
+  });
+  return row;
+}
+
+function detail(j){
+  var d = el('div','dt');
+  var x = el('button','dt-x','×');
+  x.title = '닫기';
+  x.onclick = function(){ SEL = null; render(); };
+  d.appendChild(x);
+  d.appendChild(editable(el('h3', null, j.title || ''), j, 'title', '일감 이름'));
+  var sec = secOf(j);
+  d.appendChild(el('p','sub', (sec ? sec.no + ' ' + sec.title + '  ·  ' : '') + j.screen + '  ·  ' + j.no));
+
+  GROUPS.forEach(function(g, gi){
+    var locked = !prevDone(j, gi);
+    var wrap = el('div','dt-g' + (locked ? ' lock' : ''));
+    var gh = el('div','dt-gh');
+    gh.appendChild(el('b', null, g.label));
+    if (locked) gh.appendChild(el('span','lockmsg', uiv('stLocked')));
+    wrap.appendChild(gh);
+    if (g.key === 'dev') wrap.appendChild(devPick(j));
+    g.keys.forEach(function(k){
+      if (g.key === 'dev' && !j.steps[k]) return;   /* 안 고른 쪽은 안 보인다 */
+      wrap.appendChild(stepBox(j, k, locked));
+    });
+    if (g.key === 'dev' && !j.steps.fe && !j.steps.be)
+      wrap.appendChild(el('div','dt-s none', uiv('detNone')));
+    d.appendChild(wrap);
+  });
+  return d;
+}
+
+function render(){
+  var app = document.getElementById('app');
+  app.innerHTML = '';
+
+  var head = el('div','head');
+  var top = el('div','htop');
+  var left = el('div');
+  var h1 = el('h1');
+  h1.appendChild(uiEl('span', null, 'title'));
+  left.appendChild(h1);
+  var sub = el('p','hsub');
+  sub.appendChild(document.createTextNode(uiv('loaded') + ' ' + (B.updatedAt || '')));
+  left.appendChild(sub);
+  top.appendChild(left);
+
+  var right = el('div','hright');
+  var sv = el('span','saved', uiv('loaded') + ' ' + nowHM());
+  sv.id = 'saved';
+  right.appendChild(sv);
+  var bPlan = el('button','btn','액션 플랜');
+  bPlan.onclick = openPlan;
+  right.appendChild(bPlan);
+  var b1 = el('button','btn');
+  b1.appendChild(uiEl('span', null, 'btnSave'));
+  b1.onclick = save;
+  right.appendChild(b1);
+  top.appendChild(right);
+  head.appendChild(top);
+  app.appendChild(head);
+
+  app.appendChild(allKanbans());
+  if (SEL) app.appendChild(detail(SEL));
+}
+
+
+/* ================= 액션 플랜 =================
+   슬랙 일간 보고에 올릴 한 장. 화면과 PNG 가 같은 CSS 한 벌을 쓴다.
+
+   ⚠️ PNG 는 노드를 SVG 의 foreignObject 에 담아 굽는다. 그 안에는 :root 가 없어
+      var(--...) 가 안 풀린다. 그래서 PLAN_CSS 는 색을 값으로 직접 적는다.
+      칸반 화면과 같은 값이라 눈으로는 같아 보인다.
+
+   ⚠️ 줄글로 늘어놓지 않는다 (2026-08-28 결정 사항).
+      한 줄에 일감 하나. 칸은 배지로, 남은 것은 코드로 보인다. */
+
+var WDAY = ['일','월','화','수','목','금','토'];
+
+function isoAdd(iso, n){
+  var d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+/* 두 날짜 사이의 근무일 수. 주말은 세지 않는다. */
+function workdays(fromIso, toIso, inclusive){
+  var d = new Date(fromIso + 'T00:00:00'), e = new Date(toIso + 'T00:00:00'), n = 0;
+  if (inclusive){ var w0 = d.getDay(); if (w0 !== 0 && w0 !== 6) n++; }
+  while (d < e){
+    d.setDate(d.getDate() + 1);
+    var w = d.getDay();
+    if (w !== 0 && w !== 6) n++;
+  }
+  return n;
+}
+
+/* 액션 플랜에서 [어제 휴일] 을 켰는가. 창을 열 때마다 꺼진 채로 시작한다. */
+var PLAN_HOLIDAY = false;
+
+/* 마지막으로 일한 날. 칸반에 완료 기록이 있는 날 중 오늘보다 앞선 가장 늦은 날이다.
+   ⚠️ 공휴일 표를 두지 않는다. 연휴가 며칠이든, 대체휴일이 붙든 실제 기록이 답한다. */
+function lastWorkday(today){
+  var best = null;
+  eachStep(function(s){
+    if (s.status !== 'done' || !s.doneAt) return;
+    if (s.doneAt < today && (!best || s.doneAt > best)) best = s.doneAt;
+  });
+  return best || isoAdd(today, -1);
+}
+
+/* "어제 한 일" 의 시작일. 평소에는 어제 하루다.
+   어제가 휴일이었으면 [어제 휴일] 을 켜서 마지막으로 일한 날까지 거슬러 올라간다.
+   ⚠️ 요일로 자동 판단하지 않는다. 공휴일과 연휴는 요일로 알 수 없다. */
+function planFrom(today){
+  return PLAN_HOLIDAY ? lastWorkday(today) : isoAdd(today, -1);
+}
+
+var PLAN_STEPS = ['plan', 'fe', 'be', 'qa', 'release'];
+var COL_NAME = { plan:'기획', dev:'개발', qa:'QA', wait:'릴리즈 대기', done:'배포 완료' };
+/* 칸마다 그 칸에 드는 단계 키. 개발만 둘이다. */
+var COL_KEYS = { plan:['plan'], dev:['fe','be'], qa:['qa'], wait:['release'] };
+
+/* 오늘 손대야 하는 칸들. **지금 서 있는 칸에서 아직 안 끝난 것**뿐이다.
+   그 뒤 칸은 오늘 일이 아니다. 어제 FE·BE 를 끝냈으면 오늘은 QA 고,
+   FE 만 끝냈으면 오늘도 개발이다. (2026-08-28 결정 사항) */
+function curSteps(j){
+  var keys = COL_KEYS[j.col] || [];
+  var out = [];
+  keys.forEach(function(k){
+    var s = j.steps[k];
+    if (!s) return;
+    /* QA 에 안 끝난 회차가 있으면 **그 회차가 오늘 할 일**이다.
+       칸 자체는 1회차에 이미 끝났고, 지금 남은 것은 되돌아온 회차다. */
+    var open = (s.rounds || []).filter(function(r){ return r.status !== 'done'; });
+    if (open.length){ open.forEach(function(r){ out.push(r); }); return; }
+    if (s.status !== 'done') out.push(s);
+  });
+  return out;
+}
+
+/* 그 칸에 적힌 것을 한 줄로 줄인다. 상세가 있으면 상세, 없으면 제목.
+   ⚠️ 지어내지 않는다. 둘 다 없으면 빈 문자열을 돌려주고 화면이 그렇게 말한다. */
+function planNote(steps){
+  for (var i = 0; i < steps.length; i++){
+    var s = steps[i];
+    var d = (s.desc || '').split('\n')[0].trim();
+    if (d) return d.length > 78 ? d.slice(0, 78) + '…' : d;
+  }
+  for (var k = 0; k < steps.length; k++){
+    if (steps[k].title) return steps[k].title;
+  }
+  return '';
+}
+
+function planData(){
+  var today = todayISO();
+  var from = planFrom(today);
+  var done = [], todo = [], ship = {}, shipOrder = [];
+
+  (B.jobs || []).forEach(function(j){
+    /* ── 어제 한 일. 일감 한 줄에 그 사이 끝낸 칸들을 모아 보인다.
+          작업 하나가 한 줄이면 스무 줄이 넘어 한 장에 안 들어간다. ── */
+    var hit = PLAN_STEPS.filter(function(k){
+      var s = j.steps[k];
+      return s && s.status === 'done' && s.doneAt && s.doneAt >= from && s.doneAt < today;
+    });
+    if (hit.length) done.push({ j:j, keys:hit });
+
+    /* ── 오늘 할 일. 아직 배포 완료가 아닌 일감이 전부다.
+          옛 보드는 화면을 훑어 여섯 규칙으로 골랐다. 칸반에서는 열린 일감이 곧 할 일이다. ── */
+    if (j.col !== 'done'){
+      /* ⚠️ 오늘 할 것은 **지금 칸**뿐이다. 그 뒤 칸은 오늘 일이 아니다.
+         어제 FE·BE 를 끝냈으면 오늘은 QA 다. FE 만 끝냈으면 오늘도 개발이다.
+         못 끝낸 것이 있으면 어제 그 자리에 그대로 선다. (2026-08-28 결정 사항) */
+      var cur = curSteps(j);
+      /* 오늘 이미 손댄 것을 앞에 세운다 */
+      var hot = PLAN_STEPS.some(function(k){
+        var s = j.steps[k];
+        return s && s.doneAt === today;
+      });
+      /* 이어서 할 것 · 새로 시작할 것. 끝낸 칸이 하나도 없으면 아직 시작 전이다. */
+      var started = PLAN_STEPS.some(function(k){
+        return j.steps[k] && j.steps[k].status === 'done';
+      });
+      todo.push({
+        j: j,
+        codes: cur.map(function(s){ return s.code; }),
+        note: planNote(cur),
+        hot: hot,
+        fresh: !started
+      });
+    }
+
+    /* ── 배포. 태그로 묶는다. 태그가 배포 하나의 이름이다. ── */
+    var r = j.steps.release;
+    if (r){
+      /* ⚠️ 배포는 **어제 한 일과 같은 기간**을 본다. 오늘치가 아니다. (2026-09-02 결정 사항)
+         이 장은 아침에 어제를 보고하는 것인데 배포만 오늘을 보고 있어, 아직 아무것도
+         안 나간 아침에는 늘 비어 있었다. 어제 나간 것이 어디에도 안 적혔다.
+         [어제 휴일] 을 켜면 이 기간도 함께 늘어난다. 연휴 사이 배포가 빠지지 않는다.
+         한 일감이 두 번 나갔으면 회차마다 한 줄이다. 그 기간에 나간 회차만 걸린다. */
+      [r].concat(r.rounds || []).forEach(function(e){
+        if (e.status !== 'done') return;
+        var at = (e.shippedAt || e.doneAt || '').slice(0, 10);
+        if (at < from || at >= today) return;
+        var key = e.shippedTag || e.shippedCommit || at;
+        if (!ship[key]){
+          ship[key] = { tag: e.shippedTag || '', hash: e.shippedCommit || '', at: e.shippedAt || at, items: [] };
+          shipOrder.push(key);
+        }
+        ship[key].items.push(j);
+      });
+    }
+  });
+
+  /* 어제까지 손댄 것이 앞, 아직 시작 전인 것이 뒤. 순서가 곧 우선순위다.
+     무리를 나누지 않고 순서로만 나타낸다. (2026-08-28 결정 사항) */
+  todo.sort(function(a, b){
+    if (a.fresh !== b.fresh) return a.fresh ? 1 : -1;
+    if (a.hot !== b.hot) return a.hot ? -1 : 1;
+    return a.j.no < b.j.no ? -1 : 1;
+  });
+
+  return {
+    today: today, from: from, done: done, todo: todo,
+    ship: shipOrder.map(function(k){ return ship[k]; }),
+    sched: planSched(today),
+    cols: planCols()
+  };
+}
+
+/* 칸별 일감 수. 플랜 맨 위에 한 줄로 둔다. 이것만 봐도 지금 어디가 막혔는지 보인다. */
+function planCols(){
+  var out = [];
+  ['plan','dev','qa','wait','done'].forEach(function(k){
+    out.push({ key:k, name:COL_NAME[k], n:(B.jobs || []).filter(function(j){ return j.col === k; }).length });
+  });
+  return out;
+}
+
+/* 추후 일정. 섹션별로 진도와 남은 근무일을 센다.
+   ⚠️ due 가 없는 섹션은 기간도 디데이도 비운다. 날짜를 지어내지 않는다. */
+function planSched(today){
+  return (B.sections || []).filter(function(sec){
+    return sec.dueLabel && (B.jobs || []).some(function(j){ return j.sec === sec.no; });
+  }).map(function(sec){
+    var mine = (B.jobs || []).filter(function(j){ return j.sec === sec.no; });
+    var dn = mine.filter(function(j){ return j.col === 'done'; }).length;
+    var doing = mine.some(function(j){
+      return PLAN_STEPS.some(function(k){ return j.steps[k] && j.steps[k].status === 'doing'; });
+    });
+    /* ⚠️ 일감 수만 세면 안 된다. 기획 하나만 남은 섹션이 1/1 이라 완료로 뜬다.
+       2026-08-28 에 광고 관리와 GEO 관리가 실제로 그렇게 나왔다.
+       **코드가 한 줄도 안 바뀐 섹션은 완료가 아니다.** 개발 칸이 있는 일감을 기준으로 본다. */
+    var built = mine.filter(function(j){ return j.steps.fe || j.steps.be; });
+    var state = !built.length ? 'todo'
+              : (built.every(function(j){ return j.col === 'done'; }) &&
+                 mine.every(function(j){ return j.col === 'done'; })) ? 'done'
+              : 'doing';
+
+    var when = sec.dueLabel, dday = '';
+    if (sec.start && sec.due) when = mmdd(sec.start) + '~' + mmdd(sec.due) + ' (' + workdays(sec.start, sec.due, true) + '일)';
+    else if (sec.due) when = '~' + mmdd(sec.due);
+
+    if (state !== 'done' && sec.due){
+      if (today <= sec.due) dday = '남은 ' + workdays(today, sec.due) + '일';
+      else dday = workdays(sec.due, today) + '일 지남';
+    }
+    return { sec:sec, done:dn, all:mine.length, state:state, when:when, dday:dday };
+  });
+}
+
+/* ⚠️ var(--...) 를 쓰지 않는다. SVG 안에는 :root 가 없어서 값이 안 풀린다. */
+var PLAN_CSS =
+  ".pc{width:1080px;background:#fff;color:#1e1b2e;font-size:13px;line-height:1.6;" +
+  "font-family:Pretendard,-apple-system,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased}" +
+  ".pc-top{height:4px;background:#5b4bc4}" +
+  ".pc-in{padding:20px 24px}" +
+  ".pc-date{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0}" +
+  ".pc-sub{font-size:12px;color:#7d7796;margin:3px 0 0}" +
+  ".pc-cols5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}" +
+  ".pc-col{background:#ecebf4;border:1px solid #dedbeb;border-radius:9px;padding:7px 10px}" +
+  ".pc-col .l{font-size:11px;color:#4a4560;font-weight:600}" +
+  ".pc-col .v{font-size:18px;font-weight:700;line-height:1.25}" +
+  ".pc-col.hot{background:#fdf4e3;border-color:#f0dcae}" +
+  ".pc-col.hot .v{color:#8a5a00}" +
+  ".pc-g{margin-top:14px;border-top:2px solid #dedbeb;padding-top:11px}" +
+  ".pc-gt{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:5px}" +
+  ".pc-n{font-size:11px;font-weight:700;color:#5b4bc4;background:#ede9fb;border-radius:8px;padding:1px 7px}" +
+  /* 두 열. 사이에 세로 선을 둔다. 선이 없으면 왼쪽 줄과 오른쪽 줄이 한 줄로 읽힌다.
+     칸이 행 방향으로 채워지므로 짝수 번째가 오른쪽 열이다. */
+  ".pc-two{display:grid;grid-template-columns:1fr 1fr;column-gap:0}" +
+  ".pc-two > *:nth-child(odd){padding-right:17px}" +
+  ".pc-two > *:nth-child(even){padding-left:17px;border-left:1px solid #e3e0ee}" +
+  /* 두 줄짜리 행. 윗줄에 무엇을, 아랫줄에 어떻게 */
+  ".pc-i.pc-v{display:block}" +
+  ".pc-vh{display:flex;gap:7px;align-items:baseline}" +
+  ".pc-vs{font-size:10.5px;color:#7d7796;padding-left:45px;line-height:1.5;padding-bottom:2px}" +
+  ".pc-vs.none{color:#c4c0d1}" +
+  ".pc-i{display:flex;gap:7px;align-items:baseline;padding:2px 0;border-top:1px solid #efedf6}" +
+  ".pc-no{flex:none;width:38px;font-size:10.5px;font-weight:700;color:#4a4560;" +
+  "font-family:Consolas,'Courier New',monospace}" +
+  ".pc-t{flex:1;font-size:11.5px;min-width:0}" +
+  ".pc-m{flex:none;font-size:10.5px;color:#7d7796}" +
+  ".pc-b{flex:none;font-size:9.5px;font-weight:700;border-radius:5px;padding:0 5px;line-height:1.65}" +
+  ".pc-b.PL{background:#f3eeff;color:#6d28d9}.pc-b.FE{background:#e6f4fc;color:#0369a1}" +
+  ".pc-b.BE{background:#fdf1de;color:#92400e}.pc-b.QA{background:#fdeaf3;color:#be185d}" +
+  ".pc-b.RL{background:#e3f6f3;color:#0f766e}" +
+  ".pc-b.col{background:#f1f0f5;color:#4a4560}" +
+  ".pc-b.hot{background:#fdf4e3;color:#8a5a00}" +
+  /* 배포와 추후 일정을 좌우로. 사이에 세로 선을 둔다 */
+  ".pc-pair{display:grid;grid-template-columns:1fr 1fr;column-gap:0;align-items:start}" +
+  ".pc-pair > *:nth-child(1){padding-right:17px}" +
+  ".pc-pair > *:nth-child(2){padding-left:17px;border-left:1px solid #e3e0ee}" +
+  /* 배포 줄. 왼쪽 버전 번호는 배지가 아니라 글자다. 폭을 고정해 세로로 줄이 맞는다 */
+  ".pc-ver{flex:none;width:58px;font-size:11.5px;font-weight:700;color:#0f766e;" +
+  "font-family:Consolas,'Courier New',monospace}" +
+  /* 그 배포에 실린 일감. 들여쓰고 세로로 푼다 */
+  ".pc-sub{display:flex;gap:7px;align-items:baseline;padding:0 0 0 58px;line-height:1.5}" +
+  ".pc-subno{flex:none;width:34px;font-size:10px;color:#a5a1b3;" +
+  "font-family:Consolas,'Courier New',monospace}" +
+  ".pc-subt{flex:1;font-size:10.5px;color:#4a4560;min-width:0}" +
+  /* 추후 일정. 메뉴명과 상태를 붙여 둔다. 반쪽 폭이라 칸을 좁힌다 */
+  ".pc-menu{flex:1;min-width:0;font-size:11.5px;font-weight:600}" +
+  ".pc-sc > span + span{border-left:1px solid #e3e0ee;padding-left:9px;margin-left:2px}" +
+  ".pc-sc{gap:0}" +
+  ".pc-cst{flex:none;width:62px;text-align:center}" +
+  ".pc-cst .pc-st{width:auto;display:inline-block;padding:1px 7px}" +
+  ".pc-st{flex:none;width:52px;text-align:center;font-size:10px;font-weight:700;border-radius:6px;padding:1px 0}" +
+  ".pc-st.done{color:#0a7a45;background:#e8f6ee}" +
+  ".pc-st.doing{color:#8a5a00;background:#fdf4e3}" +
+  ".pc-st.todo{color:#7d7796;background:#f1f0f5}" +
+  ".pc-when{flex:none;width:126px;text-align:right;font-size:10.5px;color:#4a4560}" +
+  ".pc-dd{flex:none;width:54px;text-align:right;font-size:10.5px;font-weight:700;color:#4a4560}" +
+  ".pc-e{font-size:12px;color:#a5a1b3;padding:5px 0;border-top:1px solid #efedf6}" +
+  ".pc-sub2{display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 3px 45px}" +
+  ".pc-f{margin-top:16px;padding-top:9px;border-top:1px solid #e3e0ee;font-size:11px;color:#7d7796;" +
+  "display:flex;justify-content:space-between;gap:12px}";
+
+/* 같은 CSS 한 벌을 화면에도 넣는다. 두 벌로 나누면 화면과 그림이 어긋난다. */
+(function(){
+  var s = document.createElement('style');
+  s.textContent = PLAN_CSS;
+  document.head.appendChild(s);
+})();
+
+function planGroup(label, n, two){
+  var g = el('div','pc-g');
+  var h = el('div','pc-gt');
+  h.appendChild(el('span', null, label));
+  h.appendChild(el('span','pc-n', String(n)));
+  g.appendChild(h);
+  g.box = two ? el('div','pc-two') : g;
+  if (two) g.appendChild(g.box);
+  return g;
+}
+
+/* 오늘 할 일 한 무리. 한 일감이 두 줄이다.
+     윗줄  번호 · 제목 · 칸 배지 · 지금 칸의 코드
+     아랫줄 그 칸에 적힌 것 한 줄 (무엇을 어떻게)
+   ⚠️ 상세가 비어 있으면 그렇게 적는다. 지어내지 않는다. */
+function planTodoGroup(inn, label, list){
+  var g = planGroup(label, list.length, true);
+  if (!list.length){ g.appendChild(el('div','pc-e','없습니다')); inn.appendChild(g); return; }
+  list.forEach(function(x){
+    var row = el('div','pc-i pc-v');
+    var h = el('div','pc-vh');
+    h.appendChild(el('span','pc-no', x.j.no));
+    h.appendChild(el('span','pc-t', x.j.title || ''));
+    h.appendChild(el('span','pc-b col' + (x.hot ? ' hot' : ''), COL_NAME[x.j.col] || x.j.col));
+    h.appendChild(el('span','pc-m', x.codes.join(' · ')));
+    row.appendChild(h);
+    row.appendChild(el('div','pc-vs' + (x.note ? '' : ' none'), x.note || '적힌 것이 없습니다'));
+    g.box.appendChild(row);
+  });
+  inn.appendChild(g);
+}
+
+function planRow(no, title, tail){
+  var r = el('div','pc-i');
+  r.appendChild(el('span','pc-no', no));
+  r.appendChild(el('span','pc-t', title));
+  (tail || []).forEach(function(n){ r.appendChild(n); });
+  return r;
+}
+
+/* 액션 플랜 한 장. 이 노드를 화면에도 붙이고 PNG 로도 굽는다. */
+function planCard(){
+  var P = planData();
+  var d = new Date(P.today + 'T00:00:00');
+  var card = el('div','pc');
+  card.appendChild(el('div','pc-top'));
+  var inn = el('div','pc-in');
+
+  inn.appendChild(el('h2','pc-date',
+    P.today + ' (' + WDAY[d.getDay()] + ') ' + (B.project || '') + ' 액션 플랜'));
+  /* ⚠️ 부제(어제 한 일 09/01 부터 09/01 · 작성 09:32)를 뺐다. (2026-09-02 결정 사항)
+     기간이 하루면 같은 날짜가 두 번 적혀 읽히지 않았고, 무리마다 이름이 이미 붙어 있다. */
+
+  /* 칸별 요약 띠. 칸반의 다섯 칸을 그대로 옮긴 것이다 */
+  var band = el('div','pc-cols5');
+  P.cols.forEach(function(c){
+    var b = el('div','pc-col' + (c.n && c.key !== 'done' ? ' hot' : ''));
+    b.appendChild(el('div','l', c.name));
+    b.appendChild(el('div','v', String(c.n)));
+    band.appendChild(b);
+  });
+  inn.appendChild(band);
+
+  /* 어제 한 일 · 오늘 할 일 — 두 열로 놓는다. 한 열이면 세로가 쌓여 한 장에 안 들어간다 */
+  var gd = planGroup('어제 한 일', P.done.length, true);
+  if (!P.done.length) gd.appendChild(el('div','pc-e','없습니다'));
+  P.done.forEach(function(x){
+    var tail = x.keys.map(function(k){
+      return el('span','pc-b ' + STEP_OF[k], STEP_OF[k]);
+    });
+    gd.box.appendChild(planRow(x.j.no, x.j.title || '', tail));
+  });
+  inn.appendChild(gd);
+
+  /* 오늘 할 일은 한 무리다. 다만 어제까지 손댄 것을 앞에 세우고
+     아직 시작 전인 것을 뒤로 민다. 순서 자체가 우선순위다. */
+  planTodoGroup(inn, '오늘 할 일', P.todo);
+
+  /* 배포와 추후 일정은 좌우로 놓는다.
+     ⚠️ 배포에 실린 일감을 한 줄에 이어 붙이면 글이 뭉쳐 안 읽힌다.
+        2026-08-28 에 16건이 한 줄로 흘러 읽을 수 없었다. 세로로 푼다. */
+  var pair = el('div','pc-pair');
+
+  /* 기간이 하루를 넘으면([어제 휴일]) 시각만으로는 어느 날 나간 것인지 모른다. 날짜를 앞에 붙인다 */
+  var manyDays = P.from < isoAdd(P.today, -1);
+  var gs = planGroup('배포', P.ship.length, false);
+  if (!P.ship.length) gs.appendChild(el('div','pc-e','어제 나간 것이 없습니다'));
+  P.ship.forEach(function(s){
+    var when = (manyDays ? mmdd((s.at || '').slice(0, 10)) + ' ' : '') + (s.at || '').slice(11);
+    var h = el('div','pc-i');
+    h.appendChild(el('span','pc-ver', s.tag || s.hash || ''));
+    h.appendChild(el('span','pc-t', ''));
+    h.appendChild(el('span','pc-m', String(s.items.length) + '건 · ' + when));
+    gs.appendChild(h);
+    s.items.forEach(function(j){
+      var r = el('div','pc-sub');
+      r.appendChild(el('span','pc-subno', j.no));
+      r.appendChild(el('span','pc-subt', j.title || ''));
+      gs.appendChild(r);
+    });
+  });
+  pair.appendChild(gs);
+
+  /* 추후 일정. 메뉴명 바로 옆에 진행 상태를 붙인다.
+     분수(3/7)는 뺐다. 남은 일감 수가 진행도를 뜻하지 않는다. */
+  var gp = planGroup('추후 일정', P.sched.length, false);
+  if (!P.sched.length) gp.appendChild(el('div','pc-e','없습니다'));
+  /* 네 칸을 세로 선으로 나눈다. 메뉴명 · 일정 · 진행 상태 · 남은 날.
+     ⚠️ 선이 없으면 어느 값이 어느 칸인지 안 보인다. */
+  P.sched.forEach(function(x){
+    var r = el('div','pc-i pc-sc');
+    r.appendChild(el('span','pc-menu', x.sec.title || ''));
+    r.appendChild(el('span','pc-when', x.when || ''));
+    /* 배지에 직접 선을 그으면 알약이 늘어난다. 감싸는 칸에 긋는다. */
+    var w = el('span','pc-cst');
+    w.appendChild(el('span','pc-st ' + x.state,
+      x.state === 'done' ? '완료' : (x.state === 'doing' ? '진행 중' : '미착수')));
+    r.appendChild(w);
+    r.appendChild(el('span','pc-dd', x.dday || ''));
+    gp.appendChild(r);
+  });
+  pair.appendChild(gp);
+
+  inn.appendChild(pair);
+
+  var f = el('div','pc-f');
+  f.appendChild(el('span', null, '정본 pm/kanban.json · 진행표는 레포 안에 있습니다'));
+  f.appendChild(el('span', null, (B.project || '') + ' · ' + P.today));
+  inn.appendChild(f);
+
+  card.appendChild(inn);
+  return card;
+}
+
+/* ───── PNG 굽기 ─────
+   브라우저에는 화면을 그림으로 만드는 기능이 없다. 노드를 SVG 의 foreignObject 에
+   담아 이미지로 읽은 뒤 캔버스에 그린다. data: URL 이라 캔버스가 오염되지 않아
+   toDataURL 이 그대로 된다. 2배로 그려 슬랙에서 확대해도 글자가 안 뭉개진다. */
+function nodeToPng(node, w, h, scale){
+  return new Promise(function(res, rej){
+    var html =
+      '<div xmlns="http://www.w3.org/1999/xhtml">' +
+      '<style>' + PLAN_CSS + '</style>' +
+      new XMLSerializer().serializeToString(node.cloneNode(true)) +
+      '</div>';
+    var svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">' +
+      '<foreignObject width="100%" height="100%">' + html + '</foreignObject></svg>';
+    var img = new Image();
+    img.onload = function(){
+      var c = document.createElement('canvas');
+      c.width = w * scale; c.height = h * scale;
+      var g = c.getContext('2d');
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+      g.scale(scale, scale);
+      g.drawImage(img, 0, 0);
+      res(c);
+    };
+    img.onerror = function(){ rej(new Error('SVG 를 이미지로 읽지 못했습니다')); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+
+function savePlanPng(node, btn){
+  var b = node.getBoundingClientRect();
+  var w = Math.ceil(b.width), h = b.height;
+  btn.disabled = true;
+  var was = btn.textContent;
+  btn.textContent = '굽는 중';
+  nodeToPng(node, w, Math.ceil(h), 2).then(function(c){
+    var a = document.createElement('a');
+    a.download = '액션플랜-' + todayISO() + '.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+    btn.textContent = '저장했습니다';
+    setTimeout(function(){ btn.textContent = was; btn.disabled = false; }, 1600);
+  }).catch(function(e){
+    btn.textContent = '실패: ' + e.message;
+    btn.disabled = false;
+  });
+}
+
+function openPlan(){
+  PLAN_HOLIDAY = false;          /* 열 때마다 꺼진 채로 시작한다 */
+  var ov = el('div','pov');
+  var bar = el('div','pov-bar');
+  var card = planCard();
+
+  /* 어제가 휴일이었으면 켠다. 그러면 마지막으로 일한 날까지 거슬러 올라간다.
+     연휴·대체휴일을 요일로는 알 수 없어서 사람이 켜는 쪽으로 뒀다. */
+  var chk = el('label','pov-chk');
+  var box = document.createElement('input');
+  box.type = 'checkbox';
+  chk.appendChild(box);
+  chk.appendChild(document.createTextNode('어제 휴일'));
+  chk.title = '켜면 어제 대신 마지막으로 일한 날의 작업을 불러옵니다';
+  box.onchange = function(){
+    PLAN_HOLIDAY = box.checked;
+    var fresh = planCard();
+    ov.replaceChild(fresh, card);
+    card = fresh;
+  };
+  bar.appendChild(chk);
+
+  var bPng = el('button','btn','PNG 저장');
+  bPng.onclick = function(){ savePlanPng(card, bPng); };
+  bar.appendChild(bPng);
+
+  var bClose = el('button','btn','닫기');
+  bClose.onclick = function(){ ov.remove(); };
+  bar.appendChild(bClose);
+
+  bar.appendChild(el('span','pov-note','커밋이 붙으면 자동으로 완료가 됩니다'));
+  ov.appendChild(bar);
+  ov.appendChild(card);
+  ov.onclick = function(ev){ if (ev.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
+}
+
+function gate(msg, btnText, onClick){
+  var app = document.getElementById('app');
+  app.innerHTML = '';
+  var g = el('div','gate');
+  g.appendChild(el('h2', null, 'PM 보드'));
+  g.appendChild(el('p', null, msg));
+  var b = el('button','btn primary', btnText);
+  b.onclick = onClick;
+  g.appendChild(b);
+  var hint = el('div','hint');
+  hint.appendChild(document.createTextNode('고른 폴더 안의 pm/board.json 을 읽고 씁니다.'));
+  hint.appendChild(el('br'));
+  hint.appendChild(document.createTextNode('한 번 고르면 다음부터는 안 물어봅니다.'));
+  g.appendChild(hint);
+  app.appendChild(g);
+}
+
+
+/* ================= 시작 ================= */
+async function boot(){
+  gate('저장 폴더를 찾는 중입니다.', '기다려 주세요', function(){});
+
+  if (!('showDirectoryPicker' in window)){
+    gate('이 브라우저는 로컬 폴더에 저장하는 기능을 지원하지 않습니다.\nChrome 이나 Edge 로 열어 주세요.', '다시 확인', boot);
+    return;
+  }
+  var h = null;
+  try { h = await withTimeout(recallDir(), 3000, '저장 폴더 기억 읽기'); }
+  catch (e) { h = null; }
+
+  if (h){
+    var p = 'prompt';
+    try { p = await withTimeout(h.queryPermission({ mode:'readwrite' }), 3000, '권한 확인'); }
+    catch (e) { p = 'prompt'; }
+    if (p !== 'granted'){
+      gate('저장 폴더는 기억하고 있습니다. 브라우저가 다시 허락을 구합니다.', '허락하고 열기', async function(){
+        var p2 = await h.requestPermission({ mode:'readwrite' });
+        if (p2 === 'granted'){ DIR = h; await load(); }
+      });
+      return;
+    }
+    DIR = h;
+    await load();
+    return;
+  }
+  gate('진행 상황을 저장할 프로젝트 폴더를 한 번만 골라 주세요.\n이 파일이 들어 있는 프로젝트의 최상위 폴더입니다.', '폴더 고르기', async function(){
+    try { await pickDir(); await load(); }
+    catch (e) { if (e.name !== 'AbortError') fatal('폴더를 열지 못했습니다', e); }
+  });
+}
+
+async function load(){
+  var txt = null;
+  try { txt = await readText(['pm','kanban.json']); } catch (e) {}
+  if (!txt){
+    gate('고르신 폴더에 pm/kanban.json 이 없습니다.\n이 도구의 pm/ 폴더를 프로젝트 최상위에 통째로 복사한 뒤 다시 골라 주세요.',
+         '다른 폴더 고르기', async function(){
+      try { await pickDir(); await load(); }
+      catch (e) { if (e.name !== 'AbortError') fatal('폴더를 열지 못했습니다', e); }
+    });
+    return;
+  }
+  try { B = JSON.parse(txt); }
+  catch (e) { fatal('kanban.json 을 읽지 못했습니다', e); return; }
+  LOADED_STAMP = B.updatedAt || null;
+
+  if (!B.jobs){ fatal('kanban.json 이 옛 구조입니다', new Error('jobs 가 없습니다')); return; }
+  if (!B.ui) B.ui = {};
+  Object.keys(UI_DEF).forEach(function(k){
+    if (B.ui[k] === undefined) B.ui[k] = UI_DEF[k];
+  });
+
+  render();
+}
+
+boot();
+
+</script>
+</body>
+</html>

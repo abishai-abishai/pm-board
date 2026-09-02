@@ -1,0 +1,14 @@
+{
+  "name": "pm-board",
+  "version": "1.0.0",
+  "description": "커밋을 읽어 스스로 갱신되는 로컬 칸반 진행 보드",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "sync": "node pm/sync-commits.js",
+    "sync:write": "node pm/sync-commits.js --write",
+    "report": "node pm/make-report.js --write",
+    "preflight": "node pm/preflight.js"
+  },
+  "engines": { "node": ">=18" }
+}

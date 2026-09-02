@@ -1,0 +1,6 @@
+# 저장 잠금 (pm/lock.js) — 잠깐 생겼다 사라지는 파일이다
+pm/kanban.lock
+
+node_modules/
+.DS_Store
+*.log
