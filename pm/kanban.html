@@ -460,6 +460,21 @@ function nowHM(){
   return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 function mmdd(iso){ return iso ? iso.slice(5).replace('-','/') : ''; }
+
+/* updatedAt 은 두 곳에서 쓴다. 이 화면은 '2026-09-02 16:23' 으로,
+   sync-commits.js 는 ISO('2026-09-02T07:04:48.957Z') 로 쓴다.
+   ⚠️ 어느 쪽이 들어 있든 사람이 읽는 자리에는 같은 모양으로 보인다.
+   값 자체는 안 고친다. 이 칸은 밖에서 바뀌었는지 견주는 열쇠라 건드리면 안 된다. */
+function stampText(v){
+  if (!v) return '';
+  var s = String(v);
+  if (s.indexOf('T') < 0) return s;
+  var d = new Date(s);
+  if (isNaN(d)) return s;
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-'
+       + String(d.getDate()).padStart(2,'0') + ' '
+       + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
 function daysLeft(iso){
   if (!iso) return null;
   return Math.round((new Date(iso + 'T00:00:00') - new Date(todayISO() + 'T00:00:00')) / 86400000);
@@ -1212,7 +1227,7 @@ function render(){
   h1.appendChild(uiEl('span', null, 'title'));
   left.appendChild(h1);
   var sub = el('p','hsub');
-  sub.appendChild(document.createTextNode(uiv('loaded') + ' ' + (B.updatedAt || '')));
+  sub.appendChild(document.createTextNode(uiv('loaded') + ' ' + stampText(B.updatedAt)));
   left.appendChild(sub);
   top.appendChild(left);
 
@@ -1745,7 +1760,7 @@ function gate(msg, btnText, onClick){
   b.onclick = onClick;
   g.appendChild(b);
   var hint = el('div','hint');
-  hint.appendChild(document.createTextNode('고른 폴더 안의 pm/board.json 을 읽고 씁니다.'));
+  hint.appendChild(document.createTextNode('고른 폴더 안의 pm/kanban.json 을 읽고 씁니다.'));
   hint.appendChild(el('br'));
   hint.appendChild(document.createTextNode('한 번 고르면 다음부터는 안 물어봅니다.'));
   g.appendChild(hint);
