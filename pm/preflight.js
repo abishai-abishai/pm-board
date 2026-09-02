@@ -138,6 +138,11 @@ function main() {
   readBranches(b)
   const byCode = indexJobs(b)
 
+  /* ⚠️ 가지가 원격에 없는데 조용히 0건으로 나오면 "나갈 것이 없다" 로 읽힌다.
+     설정이 틀린 것과 정말 없는 것은 다르다. 먼저 있는지 본다. */
+  const missing = ['origin/' + MAIN, 'origin/' + WORK]
+    .filter(r => !gitq('rev-parse --verify --quiet ' + r).trim())
+
   /* ── 나갈 커밋 ── */
   const raw = gitq('log --pretty=%h\x1f%s origin/' + MAIN + '..origin/' + WORK).trim()
   const commits = raw ? raw.split('\n').map(l => {
@@ -247,7 +252,12 @@ function main() {
   console.log('')
 
   console.log('① 나갈 커밋  ' + commits.length + '건   origin/' + MAIN + '..origin/' + WORK)
-  if (!commits.length) console.log('   나갈 것이 없습니다. main 과 feature 가 같습니다.')
+  if (missing.length) {
+    console.log('   ⚠️ 원격에 없는 가지: ' + missing.join(' · '))
+    console.log('   → kanban.json 의 branches 를 자기 저장소에 맞춰 주세요. 아래 숫자를 믿을 수 없습니다.')
+  } else if (!commits.length) {
+    console.log('   나갈 것이 없습니다. ' + MAIN + ' 과 ' + WORK + ' 가 같습니다.')
+  }
   console.log('')
 
   console.log('② 릴리즈 대기  ' + waiting.length + '건')
