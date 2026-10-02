@@ -17,6 +17,7 @@
  *   ② 배포 완료로 넘기기
  *      나머지 칸이 다 끝났고 커밋이 전부 origin/main 에 있으면 릴리즈 칸을 완료로 찍는다.
  *      배포 태그와 push 시각도 함께 적는다.
+ *      main 에 들어 있는가는 git 그래프로, push 시각은 reflog 로 본다(mainPushes).
  *
  *   ③ 칸 자리 다시 계산
  *      상태가 바뀌면 그 일감이 서는 칸도 바뀐다. 사람이 끌어 옮기지 않는다.
@@ -131,17 +132,41 @@ function colOf(j) {
 /* main 에 push 된 커밋마다 { 그 push 의 머지 커밋 · 시각 · 태그 } 를 매긴다.
    출처는 git reflog show origin/main 이고, push 시각은 거기에만 남는다.
    ⚠️ reflog 는 이 컴퓨터에만 있다. 다른 기기에서 돌리면 이 단계가 비어
-      배포 완료로 안 넘어간다. 그때는 그 컴퓨터에서 한 번 돌리면 된다. */
+      배포 완료로 안 넘어간다. 그때는 그 컴퓨터에서 한 번 돌리면 된다.
+
+   ⚠️ reflog 는 git 이 스스로 지운다. (2026-10-02 실사고)
+      git 2.55 는 커밋 뒤 자동 정리에서 30일 넘은 줄을 지운다(설정이 없을 때 · 실측).
+      그날 origin/main 에 한 달 전 한 줄만 남았고, 예전 코드는 그 앞 커밋을 전부
+      "그날 나갔다" 로 매겨 옛 일감 58개에 가짜 재배포 회차를 만들었다.
+      0줄이 되면 더 나빴다. 빈 범위로 git log 를 돌려 **작업 가지 커밋 전부**가
+      main 에 나간 것으로 보였다.
+      막는 설정은 docs/기능정의서.md 의 "reflog 보존" 을 보라.
+
+   그래서 둘을 가른다.
+   - main 에 들어 있는가 → git 그래프(git log origin/main)로 본다. reflog 와 무관하다.
+   - 언제 어느 push 였나 → reflog 로 본다. reflog 가 잘린 앞쪽은 early 로 남기고
+     시각을 비운다. **모르는 시각을 지어내지 않는다.** */
 function mainPushes() {
   const out = {}
+  let onMain = ''
+  try { onMain = git('log origin/' + MAIN + ' --pretty=%h') } catch (e) { return out }
+  for (const h of onMain.trim().split('\n').filter(Boolean)) {
+    out[h] = { commit: '', at: '', tag: '', early: true }
+  }
+
   let rows = []
   try {
-    rows = git('reflog show origin/' + MAIN + ' --date=iso').trim().split('\n').reverse()
+    rows = git('reflog show origin/' + MAIN + ' --date=iso').trim().split('\n').filter(Boolean).reverse()
       .map(l => ({ h: l.split(' ')[0], d: (l.match(/\{([^}]+)\}/) || [])[1] || '' }))
   } catch (e) {
     return out
   }
+  if (!rows.length) return out
+
+  /* 가장 오래된 줄의 "바뀌기 전" 값. reflog 가 처음부터 다 있으면 그 값이 없어 실패한다.
+     잘렸으면 그 값까지가 언제 나갔는지 모르는 앞쪽이다. */
   let prev = null
+  try { prev = git('rev-parse --verify --quiet "origin/' + MAIN + '@{' + rows.length + '}"').trim() || null } catch (e) {}
   for (const r of rows) {
     const range = prev ? prev + '..' + r.h : r.h
     let log = ''
@@ -154,6 +179,19 @@ function mainPushes() {
     prev = r.h
   }
   return out
+}
+
+/* 그 배포 커밋에 들어 있던 커밋들. git 그래프로만 본다. (2026-10-02)
+   ⚠️ 커밋마다 merge-base --is-ancestor 를 부르면 수백 번이 되어 잠금(20초)을 넘길 수 있다.
+      배포 커밋마다 한 번만 git log 로 받아 둔다. 배포 수만큼만 돈다. */
+const reachMemo = {}
+function reachOf(h) {
+  if (!(h in reachMemo)) {
+    let log = ''
+    try { log = git('log ' + h + ' --pretty=%h') } catch (e) {}
+    reachMemo[h] = new Set(log.trim().split('\n').filter(Boolean))
+  }
+  return reachMemo[h]
 }
 
 /* 배포 하나를 그 칸에 적는다. */
@@ -389,6 +427,7 @@ function main() {
   const paired = []
   const lateTag = []
   const dropped = []
+  const unknown = []
   const pushOf = mainPushes()
 
   /* ⓪-1 뒤늦게 붙인 배포 태그를 채운다. (2026-09-01)
@@ -491,8 +530,13 @@ function main() {
       if (!best || p.at > best.at) best = p
     }
 
-    /* ㉠ 아직 안 나간 첫 배포. 릴리즈 칸에 그대로 적는다. */
+    /* ㉠ 아직 안 나간 첫 배포. 릴리즈 칸에 그대로 적는다.
+       ⚠️ reflog 가 잘린 앞쪽에서 나간 커밋뿐이면 어느 배포였는지 모른다. 찍지 않고 알린다. */
     if (rl.status !== 'done') {
+      if (best.early) {
+        unknown.push(`${rl.code}  ${j.title || ''}`)
+        continue
+      }
       stamp(rl, best)
       shipped.push(`${rl.code}  ${best.tag || best.commit}  ${best.at}  ${j.title || ''}`)
       continue
@@ -513,6 +557,7 @@ function main() {
       let old = null
       for (const h of cs) {
         const p = pushOf[h]
+        if (p.early) continue
         if (rl.doneAt && p.at.slice(0, 10) > rl.doneAt) continue
         if (!old || p.at > old.at) old = p
       }
@@ -522,7 +567,13 @@ function main() {
             0.1 · 7.2 · 3.1 처럼 커밋 없이 닫은 일감이 이 자리에 온다. */
       if (!old) for (const h of cs) {
         const p = pushOf[h]
+        if (p.early) continue
         if (!old || p.at < old.at) old = p
+      }
+      /* reflog 가 잘린 앞쪽에서 나간 것뿐이면 채울 값이 없다. 비워 두고 알린다. */
+      if (!old) {
+        unknown.push(`${rl.code}  ${j.title || ''}   (옛 배포 기록 보정)`)
+        continue
       }
       /* ⚠️ 상태와 완료일은 안 건드린다. 사람이 정해 둔 값이고, 바꾸면
          액션 플랜의 "어제 한 일" 이 흔들린다. 여기서 채우는 것은 배포 정보뿐이다. */
@@ -557,8 +608,29 @@ function main() {
       })
     }
 
-    /* 이미 적힌 배포와 같은 push 면 새로 나간 것이 없다. */
     const done = [rl].concat(rl.rounds || []).filter(e => e.status === 'done')
+
+    /* ㉯ 적힌 배포 커밋에 이 일감의 커밋이 이미 다 들어 있으면 새로 나간 것이 없다.
+       (2026-10-02 · git 그래프로 본다)
+       ⚠️ 아래 두 관문(같은 push · 더 늦은 push)은 reflog 의 시각에 기댄다.
+          reflog 가 잘리면 옛 커밋이 늦게 나간 것처럼 보여 둘 다 뚫린다.
+          2026-10-02 실사고 — 옛 일감 58개에 가짜 재배포 회차가 생겼다(위 mainPushes).
+          이 관문은 reflog 를 안 본다. 그래서 맨 앞에 둔다. */
+    const heads = done.map(e => e.shippedCommit).filter(Boolean)
+    if (heads.length && cs.every(h => heads.some(s => reachOf(s).has(h)))) {
+      dropEmpty('이미 적힌 배포에 들어 있습니다')
+      continue
+    }
+
+    /* 새로 나간 커밋은 있는데 그것이 언제 어느 push 였는지 모른다.
+       reflog 가 잘린 앞쪽에서 나간 경우다. 회차를 지어내지 않고 알린다. */
+    if (best.early) {
+      const wait = (rl.rounds || []).filter(r => r.status !== 'done')[0]
+      unknown.push(`${(wait && wait.code) || rl.code}  ${j.title || ''}   (재배포)`)
+      continue
+    }
+
+    /* 이미 적힌 배포와 같은 push 면 새로 나간 것이 없다. */
     if (done.some(e => e.shippedCommit === best.commit)) {
       dropEmpty('이미 ' + (best.tag || best.commit) + ' 로 나갔습니다')
       continue
@@ -656,6 +728,14 @@ function main() {
   if (reship.length) {
     console.log(`다시 배포되어 릴리즈 회차를 만든 것 ${reship.length}건`)
     for (const l of reship) console.log('  ' + l)
+    console.log('')
+  }
+
+  if (unknown.length) {
+    console.log(`⚠️ main 에는 나갔는데 언제 어느 배포였는지 몰라 안 찍은 것 ${unknown.length}건`)
+    for (const l of unknown) console.log('  ' + l)
+    console.log('  → origin/' + MAIN + ' 의 reflog 가 잘린 앞쪽에서 나간 커밋입니다. 시각을 지어내지 않았습니다.')
+    console.log('    태그(git tag --contains <커밋>)로 확인해 사람이 적어 주세요.')
     console.log('')
   }
 
