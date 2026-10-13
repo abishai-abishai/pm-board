@@ -159,10 +159,21 @@ function main() {
   /* 일부러 안 붙이기로 한 커밋. sync-commits.js 와 같은 목록을 본다.
      kanban.json 의 ignoredCommits 가 정본이고 이유도 거기 적는다. (2026-09-02) */
   const IGNORE = new Set((b.ignoredCommits || []).map((x) => x.hash))
+  /* 칸에 손으로 넣어 둔 해시도 정리된 것이다. sync-commits.js 의 already 와 같은 기준이다.
+     제목에 코드가 없거나 틀린 커밋은 제목을 못 고치므로 이렇게 붙인다. */
+  const already = new Set()
+  for (const j of b.jobs || []) for (const k of STEP_KEYS) {
+    const s = j.steps && j.steps[k]
+    if (!s) continue
+    for (const h of s.commits || []) already.add(h)
+    for (const r of s.rounds || []) for (const h of (r && r.commits) || []) already.add(h)
+  }
   for (const c of commits) {
     if (IGNORE.has(c.hash)) continue
     const cs = codesIn(c.subject)
-    if (!cs.length) { unlinked.push(c); continue }
+    /* ⚠️ already 는 ④ 를 가를 때만 본다. 코드가 붙은 커밋은 sync-commits 가 다 칸에 넣으므로
+          맨 앞에서 건너뛰면 ③ 이 통째로 비어 버린다. */
+    if (!cs.length) { if (!already.has(c.hash)) unlinked.push(c); continue }
 
     const hits = []
     let missing = null
@@ -172,7 +183,7 @@ function main() {
       /* 릴리즈 대기 · 배포 완료가 아니면 아직 나가면 안 되는 일감이다 */
       if (j.col !== 'wait' && j.col !== 'done') hits.push({ code, job: j })
     }
-    if (missing) unlinked.push({ ...c, note: '칸반에 없는 코드 ' + missing })
+    if (missing && !already.has(c.hash)) unlinked.push({ ...c, note: '칸반에 없는 코드 ' + missing })
     if (!hits.length) continue
 
     const files = gitq('show --name-only --pretty=format: ' + c.hash)
@@ -185,6 +196,23 @@ function main() {
     }
     if (isDocOnly(files)) riskyDoc.push(row)
     else risky.push(row)
+  }
+
+  /* ── 이미 나간 것 중 정리 안 된 커밋 ──
+     ⚠️ 위 unlinked 는 이번에 나갈 커밋만 본다. 한 번 main 에 나간 커밋은 다음 배포 때
+        다시 안 보이므로, 정리를 빠뜨린 채 나가면 배포 점검에서는 영영 0건으로 지나간다.
+        그래서 따로 센다. 범위는 sync-commits.js 와 같다(syncSince 다음 · 머지 커밋 빼고). */
+  const shippedUnlinked = []
+  const since = b.syncSince || ''
+  const rawShipped = gitq('log --no-merges --pretty=%h\x1f%s ' + (since ? since + '..' : '') + 'origin/' + MAIN).trim()
+  for (const l of rawShipped ? rawShipped.split('\n') : []) {
+    const i = l.indexOf('\x1f')
+    const c = { hash: l.slice(0, i), subject: l.slice(i + 1) }
+    if (IGNORE.has(c.hash) || already.has(c.hash)) continue
+    const cs = codesIn(c.subject)
+    if (!cs.length) { shippedUnlinked.push(c); continue }
+    const miss = cs.find(code => !byCode.get(code))
+    if (miss) shippedUnlinked.push({ ...c, note: '칸반에 없는 코드 ' + miss })
   }
 
   /* ── 릴리즈 대기 ── */
@@ -282,6 +310,12 @@ function main() {
   console.log('④ 정리 안 된 커밋  ' + unlinked.length + '건')
   if (!unlinked.length) console.log('   없습니다.')
   for (const c of unlinked) console.log('   ' + c.hash + '  ' + c.subject + (c.note ? '   (' + c.note + ')' : ''))
+  if (shippedUnlinked.length) {
+    console.log('   ⚠️ 이미 ' + MAIN + ' 에 나간 것 중 정리 안 된 커밋 ' + shippedUnlinked.length + '건')
+    /* 처음 설치해 syncSince 가 비어 있으면 수백 건이 될 수 있다. 다 찍지 않는다. */
+    for (const c of shippedUnlinked.slice(0, 20)) console.log('      ' + c.hash + '  ' + c.subject + (c.note ? '   (' + c.note + ')' : ''))
+    if (shippedUnlinked.length > 20) console.log('      … 외 ' + (shippedUnlinked.length - 20) + '건. 전체는 node pm/sync-commits.js 로 봅니다')
+  }
   if (IGNORE.size) console.log('   (일부러 뺀 커밋 ' + IGNORE.size + '건 — kanban.json 의 ignoredCommits)')
   console.log('')
 
@@ -328,6 +362,7 @@ function main() {
   const warn = []
   if (risky.length) warn.push('검증 안 끝난 코드 커밋 ' + risky.length + '건이 섞여 나갑니다')
   if (unlinked.length) warn.push('정리 안 된 커밋 ' + unlinked.length + '건')
+  if (shippedUnlinked.length) warn.push('이미 나간 것 중 정리 안 된 커밋 ' + shippedUnlinked.length + '건')
   if (dirty.length) warn.push('미커밋 파일 ' + dirty.length + '건')
   if (stale.length) warn.push('칸 자리 ' + stale.length + '건 어긋남')
   if (odd.length) warn.push('칸반에 없는 상태값 ' + odd.length + '개')

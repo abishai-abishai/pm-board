@@ -363,8 +363,13 @@ function main() {
     while ((m = CODE_RE.exec(c.subject)) !== null) {
       /* m[0] 은 대괄호까지 물고 있다. 코드만 다시 짜 맞춘다. */
       const code = m[1] + '-' + m[2] + '.' + m[3] + (m[4] !== undefined ? '.' + m[4] : '')
-      /* 셋째 자리는 회차이고 QA · RL 에만 쓴다. 다른 칸에 붙어 오면 잘못 적은 것이다. */
-      if (m[4] !== undefined && m[1] !== 'QA' && m[1] !== 'RL') { badRound.add(code); continue }
+      /* 셋째 자리는 회차이고 QA · RL 에만 쓴다. 다른 칸에 붙어 오면 잘못 적은 것이다.
+         ⚠️ 그 커밋이 이미 어느 칸엔가 붙어 있으면 정리는 끝난 것이다. 아래 missingCode 와
+            같은 기준이다. 안 그러면 커밋 제목을 못 고치는 한 경고가 영영 뜬다. */
+      if (m[4] !== undefined && m[1] !== 'QA' && m[1] !== 'RL') {
+        if (!already.has(c.hash) && !IGNORE.has(c.hash)) badRound.add(code)
+        continue
+      }
       codes.push(code)
     }
 
@@ -509,7 +514,11 @@ function main() {
 
     /* 그 일감의 커밋이 전부 origin/main 에 있는가.
        ⚠️ 문서만 바꾼 커밋은 뺀다. 안 빼면 그 커밋이 실린 나중 push 가 재배포로 잡힌다.
-          다만 문서가 곧 결과물인 일감(규칙 개정 등)은 뺄 것이 없으므로 그대로 쓴다. */
+          다만 문서가 곧 결과물인 일감(규칙 개정 등)은 뺄 것이 없으므로 그대로 쓴다.
+       ⚠️ 그때도 기록 커밋(kanban.json · 진행표만 바꾼 것)은 뺀다.
+          pm/ 만 고치는 일감은 커밋이 전부 docOnly 라 위에서 all 로 떨어진다.
+          그러면 배포 뒤에 남긴 기록 커밋이 다음 push 에 실려 가짜 재배포 회차가 된다.
+          기록 커밋밖에 없는 일감은 판정할 것이 그것뿐이므로 all 을 그대로 쓴다. */
     const all = []
     const real = []
     for (const k of STEP_KEYS) {
@@ -519,7 +528,8 @@ function main() {
         if (!docOnly.has(sh)) real.push(sh)
       }
     }
-    const cs = real.length ? real : all
+    const nonRec = all.filter(h => !recOnly.has(h))
+    const cs = real.length ? real : (nonRec.length ? nonRec : all)
     if (!cs.length) continue
     if (!cs.every(h => pushOf[h])) continue
 
