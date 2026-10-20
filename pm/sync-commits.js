@@ -218,7 +218,7 @@ function nextRoundN(s) {
 /* 기록만 한 커밋. 진행 데이터 말고는 아무 파일도 안 바뀐 커밋이다.
    PO 가 작업 코드를 새로 만들 때 쓰는 "등록 커밋" 이 여기 걸린다.
 
-   ⚠️ 커밋은 그대로 이어 붙이되 **그 칸을 완료로 찍지 않는다.**
+   ⚠️ 커밋은 그대로 이어 붙이되 **그 칸의 상태를 안 바꾼다.** (진행 중 · 완료 · 수정 완료 모두)
       2026-08-31 실사고 — 등록 커밋 1705997 하나가 QA-1.6.1 을 만들자마자
       완료로 찍었다. 되돌려도 --write 를 다시 돌리면 그 커밋을 또 찾아내 재발했다.
    ⚠️ 보드 도구를 고치는 커밋은 pm/kanban.html · pm/*.js 가 함께 바뀌므로 안 걸린다. */
@@ -245,7 +245,7 @@ function filesOf(hashes) {
 /* ㉮ 기록만 한 커밋. 진행 데이터 말고는 아무 파일도 안 바뀐 커밋이다.
    PO 가 작업 코드를 새로 만들 때 쓰는 "등록 커밋" 이 여기 걸린다.
 
-   ⚠️ 커밋은 그대로 이어 붙이되 **그 칸을 완료로 찍지 않는다.**
+   ⚠️ 커밋은 그대로 이어 붙이되 **그 칸의 상태를 안 바꾼다.** (진행 중 · 완료 · 수정 완료 모두)
       2026-08-31 실사고 — 등록 커밋 1705997 하나가 QA-1.6.1 을 만들자마자
       완료로 찍었다. 되돌려도 --write 를 다시 돌리면 그 커밋을 또 찾아내 재발했다.
    ⚠️ 보드 도구를 고치는 커밋은 pm/kanban.html · pm/*.js 가 함께 바뀌므로 안 걸린다. */
@@ -387,32 +387,44 @@ function main() {
       }
       const t = hit.step
       if (!t.commits) t.commits = []
-      if (!t.commits.includes(c.hash)) {
+      const fresh = !t.commits.includes(c.hash)
+      if (fresh) {
         t.commits.push(c.hash)
         linked.push(`${code}  ${c.hash}  ${c.subject}`)
         touched.add(hit.job)
       }
-      /* 커밋이 붙으면 그 칸은 끝난 것으로 본다.
-         이 레포는 작업 단위로 커밋하고 커밋 제목에 작업 코드를 단다.
-         그래서 코드가 붙은 커밋이 곧 완료 기록이다.
-
-         완료일은 **마지막 커밋 날짜**다. 관련 커밋이 한 번 더 나면 그날로 갱신된다
-         (2026-08-28 확정 사항 · docs/기능정의서.md).
-         ⚠️ 보류(block)로 세워 둔 것은 건드리지 않는다. 사람이 일부러 세운 것이다. */
-      /* ⚠️ 기록만 한 커밋은 완료로 안 찍는다. 위 recordOnly 를 보라. */
+      /* ⚠️ 기록만 한 커밋은 상태를 안 바꾼다. 위 recordOnly 를 보라.
+         ⚠️ 목록에는 이번에 새로 붙인 것만 넣는다. 위 linked 와 같은 기준이다.
+            이 반복문은 syncSince 뒤 커밋을 돌 때마다 전부 다시 지나가므로,
+            가리지 않으면 이미 붙어 있던 기록 커밋이 돌릴 때마다 다시 목록에 뜬다.
+            그러면 새로 생긴 것을 알아볼 수 없다. */
       if (recOnly.has(c.hash)) {
-        recorded.push(`${code}  ${c.hash}  ${c.subject}`)
+        if (fresh) recorded.push(`${code}  ${c.hash}  ${c.subject}`)
         continue
       }
-      /* ⚠️ QA 칸만은 커밋이 붙어도 **완료로 안 찍는다.** 커밋은 "고쳤다" 는 기록이지
-         "검증했다" 는 기록이 아니다. 검증은 검증 담당자가 화면을 보고 한다.
-         그래서 QA 는 수정 완료(fixed)까지만 올리고, 검증 완료는 사람이 찍는다.
-         (2026-08-31 확정 사항 · docs/기능정의서.md)
+      /* 커밋이 붙으면 그 칸이 어디까지 가나 (docs/기능정의서.md 4절)
 
-         ⚠️ 이미 검증 완료(done)인 것은 내리지 않는다. 붙은 커밋은 다시 안 붙지만
-            이 줄은 돌 때마다 지나가므로, 내리면 매번 검증이 풀린다. */
-      const goal = code.startsWith('QA-') ? 'fixed' : 'done'
-      if (t.status !== 'block' && !(goal === 'fixed' && t.status === 'done')) {
+           PL · FE · BE   대기 → 진행 중. 완료는 사람이 찍는다
+           QA             수정 완료(fixed). 검증 완료는 사람이 화면을 보고 찍는다
+           RL             옛 그대로. 배포 판정은 아래 ② 가 따로 한다
+
+         ⚠️ PL · FE · BE 를 커밋으로 완료까지 올리지 않는다. 작업 단위로 커밋하면
+            한 단계에 커밋이 여럿 붙는다. 화면 뼈대만 만든 첫 커밋에도 개발 칸이
+            완료가 되어 일감이 QA 칸으로 갔고, 사람이 진행 중으로 되돌려도 이 반복문이
+            돌 때마다 다시 완료로 찍었다.
+         ⚠️ 이미 완료(done)인 것은 내리지 않는다. 완료일만 마지막 커밋 날짜로 늦춘다.
+            진행 중인 칸에는 완료일을 적지 않는다.
+         ⚠️ QA 의 검증 완료(done)도 내리지 않는다. 내리면 돌릴 때마다 검증이 풀린다.
+         ⚠️ 보류(block)로 세워 둔 것은 건드리지 않는다. 사람이 일부러 세운 것이다. */
+      const goal = code.startsWith('QA-') ? 'fixed' : code.startsWith('RL-') ? 'done' : 'doing'
+      if (goal === 'doing') {
+        if (t.status === 'done') {
+          if (!t.doneAt || t.doneAt < c.date) t.doneAt = c.date
+        } else if (t.status !== 'block' && t.status !== 'doing') {
+          t.status = 'doing'
+          touched.add(hit.job)
+        }
+      } else if (t.status !== 'block' && !(goal === 'fixed' && t.status === 'done')) {
         t.status = goal
         if (!t.doneAt || t.doneAt < c.date) t.doneAt = c.date
         touched.add(hit.job)

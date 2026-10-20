@@ -1030,7 +1030,9 @@ function statusSelect(step, locked, qa){
     step.status = sel.value;
     /* 끝난 날을 적는다. 되돌리면 지운다.
        QA 의 수정 완료도 그날을 적는다 — 고치기가 끝난 날이 남아야 한다.
-       ⚠️ 커밋이 붙어 찍힌 것은 sync-commits.js 가 다시 채운다. */
+       완료로 찍은 뒤 커밋이 더 붙으면 sync-commits.js 가 그 커밋 날짜로 늦춘다.
+       ⚠️ 커밋은 PL · FE · BE 를 진행 중까지만 올리므로 완료일을 새로 만들지 않는다.
+          진행 중으로 되돌리면 완료일은 지워진 채로 남는다. (docs/기능정의서.md 4절) */
     if (sel.value === 'done' || sel.value === 'fixed'){ if (!step.doneAt) step.doneAt = todayISO(); }
     else { step.doneAt = null; }
     touch(); render();
@@ -1743,7 +1745,7 @@ function openPlan(){
   bClose.onclick = function(){ ov.remove(); };
   bar.appendChild(bClose);
 
-  bar.appendChild(el('span','pov-note','커밋이 붙으면 자동으로 완료가 됩니다'));
+  bar.appendChild(el('span','pov-note','커밋이 붙으면 진행 중까지 갑니다. 완료로 찍은 칸만 어제 한 일에 뜹니다'));
   ov.appendChild(bar);
   ov.appendChild(card);
   ov.onclick = function(ev){ if (ev.target === ov) ov.remove(); };
